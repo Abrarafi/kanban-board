@@ -2,9 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { BoardHeaderComponent } from '../../components/board-header/board-header.component';
 import { ColumnComponent } from '../../components/column/column.component';
 import { Board } from '../../models/board.model';
-import { Subscription } from 'rxjs';
+import { Column } from '../../models/column.model';
 import { Card } from '../../models/card.model';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-board-view',
@@ -15,55 +16,33 @@ import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/dr
 })
 export class BoardViewComponent implements OnInit {
   board: Board = {
-    id: '1',
-    name: 'Project Tasks',
-    columns: [
-      {
-        id: 'col1',
-        name: 'To Do',
-        order: 0,
-        boardId: '1',
-        cards: [
-          {
-            id: '1',
-            title: 'Implement Authentication',
-            description: 'Set up JWT authentication',
-            priority: 'HIGH',
-            columnId: 'col1',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        ]
-      },
-      {
-        id: 'col2',
-        name: 'In Progress',
-        order: 1,
-        boardId: '1',
-        cards: []
-      },
-      {
-        id: 'col3',
-        name: 'Done',
-        order: 2,
-        boardId: '1',
-        cards: []
-      }
-    ],
+    id: 'board1',
+    name: 'Project Board',
+    columns: [],
     createdAt: new Date(),
     updatedAt: new Date()
   };
 
   isLoading = true;
   error: string | null = null;
-  private subscriptions = new Subscription();
+
+  constructor(private apiService: ApiService) {}
 
   ngOnInit(): void {
-    // In a real app, you would fetch board data here
+    this.loadColumns();
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
+  private loadColumns(): void {
+    this.apiService.getColumns().subscribe({
+      next: (columns) => {
+        this.board.columns = columns;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.error = 'Failed to load columns';
+        this.isLoading = false;
+      }
+    });
   }
 
   getConnectedColumnIds(currentColumnId: string): string[] {
@@ -86,28 +65,65 @@ export class BoardViewComponent implements OnInit {
         event.previousIndex,
         event.currentIndex
       );
+
+      // Update the card's columnId
+      const card = event.container.data[event.currentIndex];
+      const newColumnId = event.container.id;
+      this.apiService.moveCard(event.previousContainer.id, newColumnId, card).subscribe();
     }
   }
 
   onAddCard(columnId: string, title: string) {
-    const column = this.board.columns.find(col => col.id === columnId);
-    if (column) {
-      const newCard: Card = {
-        id: Date.now().toString(),
-        title,
-        columnId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      column.cards.push(newCard);
-    }
+    console.log('BoardView: onAddCard called with:', { columnId, title });
+    
+    const newCard: Card = {
+      id: Date.now().toString(),
+      title,
+      description: '',
+      columnId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    this.apiService.addCard(columnId, newCard).subscribe({
+      next: (card) => {
+        console.log('BoardView: API response received:', card);
+        const column = this.board.columns.find(col => col.id === columnId);
+        if (column) {
+          // Check if card already exists in column
+          const exists = column.cards.some(c => c.id === card.id);
+          if (!exists) {
+            column.cards = [...column.cards, card];
+          }
+        }
+      },
+      error: (err) => {
+        this.error = 'Failed to add card';
+      }
+    });
   }
 
   addNewColumn(): void {
-    if (!this.board) return;
+    console.log('BoardView: addNewColumn called');
     const name = prompt('Enter column name:');
-    if (name) {
-      // In a real app, you would call the board service to create a new column
+    if (name?.trim()) {
+      // Check if column already exists in the board
+      const exists = this.board.columns.some(col => col.name === name);
+      if (exists) {
+        this.error = 'Column with this name already exists';
+        return;
+      }
+
+      this.apiService.addColumn(this.board.id, name).subscribe({
+        next: (column) => {
+          console.log('BoardView: Column created:', column);
+          // Create a new array instead of mutating the existing one
+          this.board.columns = Array.from(new Set([...this.board.columns, column]));
+        },
+        error: (err) => {
+          this.error = 'Failed to create column';
+        }
+      });
     }
   }
 }

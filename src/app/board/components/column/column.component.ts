@@ -18,12 +18,14 @@ export class ColumnComponent {
   @Output() addCard = new EventEmitter<string>();
 
   onDrop(event: CdkDragDrop<any[]>): void {
+    console.log('onDrop called with event:', event);
     this.cardDropped.emit(event);
   }
 
   onAddCard(): void {
     const title = prompt('Enter card title:');
-    if (title) {
+    if (title?.trim()) {
+      console.log('Emitting addCard event with title:', title);
       this.addCard.emit(title);
     }
   }
