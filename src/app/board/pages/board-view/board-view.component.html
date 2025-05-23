@@ -1,2 +1,21 @@
 <p>board-view works!</p>
-<app-board-header></app-board-header>
+<div class="h-full flex flex-col">
+    <app-board-header 
+    [boardTitle]="board?.name || 'Loading...'" 
+    (addColumn)="addNewColumn()">
+  </app-board-header>
+  
+  <div class="flex-1 p-6 overflow-x-auto">
+    <div class="flex gap-6">
+      @for(column of board.columns; track column.id) {
+        <app-column
+          [column]="column"
+          [connectedTo]="getConnectedColumnIds(column.id)"
+          (cardDropped)="onCardDropped($event)"
+          (addCard)="onAddCard(column.id, $event)"
+        ></app-column>
+      }
+    </div>
+  </div>
+</div>
+

@@ -1,1 +1,116 @@
-<p>board-header works!</p>
+<header class="bg-white shadow-sm">
+    <div class="px-4 py-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center">
+        <h1 class="text-xl font-bold text-gray-900">{{ boardTitle }}</h1>
+        
+        <div class="flex items-center space-x-2">
+          <!-- Invite Members Button -->
+          @if(showActions){
+            <button 
+            (click)="onInviteMembers()"
+            class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-4 font-bold rounded-3xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+            <mat-icon class="h-5 w-5 mr-1">person_add</mat-icon>
+            Invite
+          </button>
+
+          <!-- Members List Button -->
+          <div class="relative">
+            <button 
+              (click)="toggleMembersList(); $event.stopPropagation()"
+              class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-4 font-bold rounded-3xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+              <mat-icon class="h-5 w-5 mr-1">group</mat-icon>
+              Members
+            </button>
+
+            <!-- Members List Dropdown -->
+            @if(isMembersListOpen){
+            <div (click)="$event.stopPropagation()" class="origin-top-right absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+              <div class="py-1">
+                <div class="px-4 py-2 text-sm text-gray-900 font-medium border-b border-gray-200">
+                  Board Members
+                </div>
+                @for(member of members; track member.name){
+                  <div class="px-4 py-3 flex items-center justify-between hover:bg-gray-50">
+                    <div class="flex items-center">
+                      <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center mr-3">
+                        <span class="text-sm font-medium text-gray-700">{{member.avatar}}</span>
+                      </div>
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{member.name}}</div>
+                        <div class="text-sm text-gray-500">{{member.role}}</div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+            }
+          </div>
+          }
+          
+          <!-- Share Button with Dropdown -->
+          <div class="relative">
+            <button 
+              (click)="toggleShareDropdown()"
+              class="inline-flex items-center px-3 py-1.5 border text-sm leading- font-bold rounded-3xl text-white bg-indigo-600 hover:bg-primary-600 focus:outline-none font-plus-jakarta">
+              <mat-icon class="h-2 w-2 mr-1">share</mat-icon>
+              Share
+            </button>
+  
+            <!-- Share Dropdown -->
+            @if(isShareDropdownOpen){
+            <div (click)="$event.stopPropagation()" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+              <div class="py-1">
+                <button 
+                  (click)="copyBoardLink()"
+                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  <div class="flex items-center">
+                    <mat-icon class="mr-2">content_copy</mat-icon>
+                    Copy link
+                  </div>
+                </button>
+                <button 
+                  (click)="onShareBoard()"
+                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  <div class="flex items-center">
+                    <mat-icon class="mr-2">mail</mat-icon>
+                    Share via email
+                  </div>
+                </button>
+              </div>
+            </div>
+             }
+          </div>
+  
+          <!-- Add Column Button -->
+          @if(showActions){
+          <button 
+            
+            (click)="onAddColumn()"
+            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-4xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
+            Add Column
+          </button>
+        }
+          
+          <!-- User Menu -->
+          <div class="relative ml-2">
+            <button (click)="toggleMenu()" class="flex items-center space-x-2 focus:outline-none">
+              <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                <span class="text-sm font-medium">U</span>
+              </div>
+            </button>
+
+            @if(isMenuOpen){
+            <div  class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+              <div class="py-1">
+                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+              </div>
+            </div>
+        }
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>

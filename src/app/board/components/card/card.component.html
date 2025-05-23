@@ -1,1 +1,66 @@
-<p>card works!</p>
+<div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all">
+  <!-- Header -->
+  <div class="flex justify-between items-start mb-3">
+    <h3 class="text-base font-medium text-gray-900">{{ card.title }}</h3>
+    <div class="flex gap-2">
+      @if(card.status) {
+        <span class="text-xs px-2 py-1 rounded-full" [ngClass]="statusClasses">
+          {{ card.status }}
+        </span>
+      }
+      @if(card.priority) {
+        <span class="text-xs px-2 py-1 rounded-full" [ngClass]="priorityClasses">
+          {{ card.priority }}
+        </span>
+      }
+    </div>
+  </div>
+
+  <!-- Description -->
+  @if(card.description) {
+    <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ card.description }}</p>
+  }
+
+  <!-- Assignee -->
+  @if(card.assignee) {
+    <div class="flex items-center mb-3">
+      @if(avatarUrl) {
+        <img [src]="avatarUrl" [alt]="card.assignee.name" 
+             class="h-6 w-6 rounded-full mr-2 object-cover">
+      } @else {
+        <div class="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-sm font-medium">
+          {{ initials }}
+        </div>
+      }
+      <span class="text-sm text-gray-600">{{ card.assignee.name }}</span>
+    </div>
+  }
+
+  <!-- Footer -->
+  <div class="flex justify-between items-center text-xs text-gray-500">
+    <!-- Due Date -->
+    @if(card.dueDate) {
+      <div class="flex items-center">
+        <span class="material-icons-outlined text-base mr-1">schedule</span>
+        <span [class.text-red-500]="isOverdue">
+          Due: {{ card.dueDate | date:'MMM d' }}
+          @if(isOverdue) {
+            <span class="ml-1">(Overdue)</span>
+          }
+        </span>
+      </div>
+    }
+
+    <!-- Timestamps -->
+    <div class="flex gap-2">
+      <span title="Created {{ card.createdAt | date:'medium' }}">
+        Created: {{ card.createdAt | date:'shortDate' }}
+      </span>
+      @if(card.updatedAt) {
+        <span title="Updated {{ card.updatedAt | date:'medium' }}">
+          • Updated: {{ card.updatedAt | date:'shortDate' }}
+        </span>
+      }
+    </div>
+  </div>
+</div>
