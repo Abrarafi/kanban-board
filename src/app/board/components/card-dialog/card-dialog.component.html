@@ -1,0 +1,66 @@
+<div class="p-4">
+  <h2 mat-dialog-title class="text-xl font-semibold mb-4">{{ data.mode === 'edit' ? 'Edit Card' : 'Create New Card' }}</h2>
+  
+  <mat-dialog-content class="max-h-[70vh] overflow-y-auto">
+    <form [formGroup]="cardForm" class="flex flex-col gap-4 min-w-[400px] max-w-[500px]">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Title</mat-label>
+        <input matInput formControlName="title" placeholder="Enter card title">
+        <mat-error *ngIf="cardForm.get('title')?.hasError('required')">
+          Title is required
+        </mat-error>
+        <mat-error *ngIf="cardForm.get('title')?.hasError('minlength')">
+          Title must be at least 3 characters
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Description</mat-label>
+        <textarea matInput formControlName="description" 
+                  rows="3" placeholder="Enter card description"
+                  class="resize-y min-h-[100px]"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Assignees</mat-label>
+        <mat-select formControlName="assignees" multiple [compareWith]="compareUsers">
+          <mat-option *ngFor="let user of users" [value]="user">
+            <div class="flex items-center gap-2 py-1">
+              <img *ngIf="user.avatar" [src]="user.avatar" [alt]="user.name" 
+                   class="w-6 h-6 rounded-full object-cover">
+              <div class="flex flex-col">
+                <span class="font-medium">{{ user.name }}</span>
+                <span class="text-sm text-gray-600">{{ user.email }}</span>
+              </div>
+            </div>
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Priority</mat-label>
+        <mat-select formControlName="priority">
+          <mat-option value="LOW">Low</mat-option>
+          <mat-option value="MEDIUM">Medium</mat-option>
+          <mat-option value="HIGH">High</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Due Date</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="dueDate">
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="mt-4 gap-2">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-raised-button color="primary" 
+            [disabled]="cardForm.invalid"
+            (click)="onSubmit()">
+      {{ data.mode === 'edit' ? 'Save' : 'Create' }}
+    </button>
+  </mat-dialog-actions>
+</div>

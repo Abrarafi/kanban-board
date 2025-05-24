@@ -6,6 +6,8 @@ import { Column } from '../../models/column.model';
 import { Card } from '../../models/card.model';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ApiService } from '../../services/api.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ColumnDialogComponent } from '../../components/column-dialog/column-dialog.component';
 
 @Component({
   selector: 'app-board-view',
@@ -26,7 +28,10 @@ export class BoardViewComponent implements OnInit {
   isLoading = true;
   error: string | null = null;
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private dialog: MatDialog
+  ) {}
 
   ngOnInit(): void {
     this.loadColumns();
@@ -66,64 +71,55 @@ export class BoardViewComponent implements OnInit {
         event.currentIndex
       );
 
-      // Update the card's columnId
       const card = event.container.data[event.currentIndex];
       const newColumnId = event.container.id;
       this.apiService.moveCard(event.previousContainer.id, newColumnId, card).subscribe();
     }
   }
 
-  onAddCard(columnId: string, title: string) {
-    console.log('BoardView: onAddCard called with:', { columnId, title });
-    
-    const newCard: Card = {
-      id: Date.now().toString(),
-      title,
-      description: '',
-      columnId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    this.apiService.addCard(columnId, newCard).subscribe({
-      next: (card) => {
-        console.log('BoardView: API response received:', card);
+  onAddCard(columnId: string, card: Card) {
+    console.log('BoardView: Adding card to column:', columnId, card);
+    this.apiService.addCard(columnId, card).subscribe({
+      next: (newCard) => {
+        console.log('BoardView: Card added successfully:', newCard);
         const column = this.board.columns.find(col => col.id === columnId);
         if (column) {
-          // Check if card already exists in column
-          const exists = column.cards.some(c => c.id === card.id);
+          const exists = column.cards.some(c => c.id === newCard.id);
           if (!exists) {
-            column.cards = [...column.cards, card];
+            column.cards = [...column.cards, newCard];
           }
         }
       },
       error: (err) => {
+        console.error('BoardView: Failed to add card:', err);
         this.error = 'Failed to add card';
       }
     });
   }
 
   addNewColumn(): void {
-    console.log('BoardView: addNewColumn called');
-    const name = prompt('Enter column name:');
-    if (name?.trim()) {
-      // Check if column already exists in the board
-      const exists = this.board.columns.some(col => col.name === name);
-      if (exists) {
-        this.error = 'Column with this name already exists';
-        return;
+    const dialogRef = this.dialog.open(ColumnDialogComponent, {
+      width: '500px',
+      data: {
+        mode: 'create',
+        boardId: this.board.id
       }
+    });
 
-      this.apiService.addColumn(this.board.id, name).subscribe({
-        next: (column) => {
-          console.log('BoardView: Column created:', column);
-          // Create a new array instead of mutating the existing one
-          this.board.columns = Array.from(new Set([...this.board.columns, column]));
-        },
-        error: (err) => {
-          this.error = 'Failed to create column';
-        }
-      });
-    }
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        console.log('BoardView: Creating new column:', result);
+        this.apiService.addColumn(this.board.id, result).subscribe({
+          next: (column) => {
+            console.log('BoardView: Column created successfully:', column);
+            this.board.columns = Array.from(new Set([...this.board.columns, column]));
+          },
+          error: (err) => {
+            console.error('BoardView: Failed to create column:', err);
+            this.error = 'Failed to create column';
+          }
+        });
+      }
+    });
   }
 }

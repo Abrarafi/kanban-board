@@ -3,6 +3,9 @@ import { Column } from '../../models/column.model';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { CardComponent } from '../card/card.component';
 import { NgFor } from '@angular/common';
+import { MatDialog } from '@angular/material/dialog';
+import { CardDialogComponent } from '../card-dialog/card-dialog.component';
+import { Card } from '../../models/card.model';
 
 @Component({
   selector: 'app-column',
@@ -14,19 +17,29 @@ import { NgFor } from '@angular/common';
 export class ColumnComponent {
   @Input() column!: Column;
   @Input() connectedTo: string[] = [];
-  @Output() cardDropped = new EventEmitter<CdkDragDrop<any[]>>();
-  @Output() addCard = new EventEmitter<string>();
+  @Output() cardDropped = new EventEmitter<CdkDragDrop<Card[]>>();
+  @Output() addCard = new EventEmitter<Card>();
 
-  onDrop(event: CdkDragDrop<any[]>): void {
-    console.log('onDrop called with event:', event);
+  constructor(private dialog: MatDialog) {}
+
+  onDrop(event: CdkDragDrop<Card[]>): void {
     this.cardDropped.emit(event);
   }
 
   onAddCard(): void {
-    const title = prompt('Enter card title:');
-    if (title?.trim()) {
-      console.log('Emitting addCard event with title:', title);
-      this.addCard.emit(title);
-    }
+    const dialogRef = this.dialog.open(CardDialogComponent, {
+      width: '500px',
+      data: {
+        mode: 'create',
+        columnId: this.column.id
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        console.log('Column received card:', result);
+        this.addCard.emit(result as Card);
+      }
+    });
   }
 }

@@ -13,4 +13,10 @@ export interface Card {
     columnId: string;
     createdAt: Date;
     updatedAt: Date;
+    assignees?: Array<{
+      id: string;
+      name: string;
+      email: string;
+      avatar?: string;
+    }>;
   }

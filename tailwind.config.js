@@ -35,7 +35,10 @@ module.exports = {
           'blue-dark': '#1d4ed8',
           'blue-light': '#3b82f6',
         }
-      }
+      },
+      fontFamily: {
+        sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+      },
     }
   },
   plugins: [],

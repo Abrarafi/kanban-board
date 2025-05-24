@@ -31,7 +31,9 @@ export class ApiService {
           createdAt: new Date(),
           updatedAt: new Date()
         }
-      ]
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
       id: '2',
@@ -47,7 +49,9 @@ export class ApiService {
           createdAt: new Date(),
           updatedAt: new Date()
         }
-      ]
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
       id: '3',
@@ -63,7 +67,9 @@ export class ApiService {
           createdAt: new Date(),
           updatedAt: new Date()
         }
-      ]
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
   ];
 
@@ -79,15 +85,20 @@ export class ApiService {
     return id;
   }
 
-  addColumn(boardId: string, name: string): Observable<Column> {
+  addColumn(boardId: string, column: Partial<Column>): Observable<Column> {
     console.log('ApiService: addColumn called');
     
     const newColumn: Column = {
       id: this.generateUniqueId(),
-      name,
+      name: column.name!,
+      description: column.description || '',
+      wip: column.wip || 0,
+      color: column.color || '#E2E8F0',
       order: this.columns.length,
       boardId,
-      cards: []
+      cards: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
     console.log('ApiService: Adding new column');
