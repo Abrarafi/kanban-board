@@ -1,13 +1,13 @@
-<div class="bg-white px-2 py-1 rounded-3xl shadow-sm border border-gray-200 hover:shadow-md transition-all">
+<div class="bg-white px-2 py-1 rounded-3xl shadow-sm border border-gray-200 hover:shadow-md transition-all relative overflow-visible">
   <div class="px-2 py-1 flex justify-between items-start">
     <div class="flex gap-2">
       @if(card.priority) {
-        <span class="text-xs font-semibold px-2 py-1 rounded-full" [ngClass]="priorityClasses">
+        <span class="text-xs font-medium px-2 py-1 rounded-full" [ngClass]="priorityClasses">
           {{ card.priority }}
         </span>
       }
       @if(card.status) {
-        <span class="text-xs px-2 font-semibold py-1 rounded-full" [ngClass]="statusClasses">
+        <span class="text-xs px-2 font-medium py-1 rounded-full" [ngClass]="statusClasses">
           {{ card.status }}
         </span>
       }
@@ -16,10 +16,10 @@
     <div class="relative">
       <button
         (click)="toggleMenu()"
-        class="p-1 hover:bg-gray-100 rounded-full"
+        class=" hover:bg-gray-100 rounded-full"
         #menuButton
       >
-        <mat-icon class="text-gray-500 text-xl">more_vert</mat-icon>
+        <mat-icon class="text-gray-500 text-xl">more_horiz</mat-icon>
       </button>
 
       @if(isMenuOpen) {
@@ -65,27 +65,80 @@
     </div>
   }
 
-  <!-- Assignee -->
-  @if(card.assignee) {
-    <div class="px-2 py-1 flex items-center">
-      @if(avatarUrl) {
-        <img [src]="avatarUrl" [alt]="card.assignee.name" 
-             class="h-6 w-6 rounded-full mr-2 object-cover">
-      } @else {
-        <div class="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-sm font-medium">
-          {{ initials }}
+  <!-- Assignees -->
+  <div class="flex justify-between items-center px-2">
+    <h3 class="text-[16px]">Assignees:</h3>
+    
+    @if(card.assignees.length > 0) {
+      <div class="relative">
+        <!-- Assignee Avatars -->
+        <div class="flex -space-x-2 cursor-pointer" (click)="toggleAssigneeList($event)" #assigneeList>
+          @for(assignee of visibleAssignees; track assignee.id) {
+            <div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden ring-2 ring-white">
+              @if(assignee.avatar) {
+                <img [src]="assignee.avatar" [alt]="assignee.name"
+                     class="w-full h-full object-cover">
+              } @else {
+                <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-600 font-medium">
+                  {{ assignee.name.charAt(0).toUpperCase() }}
+                </div>
+              }
+            </div>
+          }
+          @if(hasMoreAssignees) {
+            <div class="w-8 h-8 rounded-full bg-gray-100 ring-2 ring-white flex items-center justify-center text-sm text-gray-600 font-medium cursor-pointer">
+              +{{ remainingAssigneesCount }}
+            </div>
+          }
         </div>
-      }
-      <span class="text-sm text-gray-600">{{ card.assignee.name }}</span>
-    </div>
-  }
+
+        <!-- Assignee List Popup -->
+        @if(isAssigneeListOpen) {
+          <div 
+            class="absolute z-[1000] w-64 bg-amber-50 rounded-lg shadow-lg border border-gray-200 overflow-visible"
+            [class.bottom-full]="showAbove"
+            [class.top-full]="!showAbove"
+            [class.mb-2]="showAbove"
+            [class.mt-2]="!showAbove"
+            style="right: 0;"
+            (clickOutside)="closeAssigneeList()"
+          >
+            <div class="sticky top-0 px-3 py-2 text-sm font-medium text-gray-700 border-b border-gray-100 bg-white">
+              Assignees
+            </div>
+            <div class="max-h-[240px] bg-white overflow-y-auto">
+              @for(assignee of card.assignees; track assignee.id) {
+                <div class="px-3 py-2 flex items-center gap-2 hover:bg-gray-50">
+                  <div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                    @if(assignee.avatar) {
+                      <img [src]="assignee.avatar" [alt]="assignee.name"
+                           class="w-full h-full object-cover">
+                    } @else {
+                      <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-600 font-medium">
+                        {{ assignee.name.charAt(0).toUpperCase() }}
+                      </div>
+                    }
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-sm font-medium text-gray-900 truncate">{{ assignee.name }}</span>
+                    <span class="text-xs text-gray-500 truncate">{{ assignee.email }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
 
   <!-- Footer -->
-  <div class="px-2 py-1 flex justify-between items-center text-xs text-gray-500">
+  <div class="px-2 py-1 flex justify-between items-center text-xs font-medium text-gray-500">
+    <mat-icon class="text-base">schedule</mat-icon>
     <!-- Due Date -->
     @if(card.dueDate) {
       <div class="flex items-center">
-        <span class="material-icons-outlined text-base mr-1">schedule</span>
+        
         <span [class.text-red-500]="isOverdue">
           Due: {{ card.dueDate | date:'MMM d' }}
           @if(isOverdue) {

@@ -19,6 +19,10 @@ export class ApiService {
           id: '1', 
           title: 'Task 1', 
           description: 'Do something important',
+          priority: 'MEDIUM',
+          status: 'Not Started',
+          dueDate: null,
+          assignees: [],
           columnId: '1',
           createdAt: new Date(),
           updatedAt: new Date()
@@ -27,6 +31,10 @@ export class ApiService {
           id: '2', 
           title: 'Task 2', 
           description: 'Do something else',
+          priority: 'LOW',
+          status: 'Not Started',
+          dueDate: null,
+          assignees: [],
           columnId: '1',
           createdAt: new Date(),
           updatedAt: new Date()
@@ -45,6 +53,10 @@ export class ApiService {
           id: '3', 
           title: 'Task 3', 
           description: 'Working on this',
+          priority: 'HIGH',
+          status: 'On Track',
+          dueDate: null,
+          assignees: [],
           columnId: '2',
           createdAt: new Date(),
           updatedAt: new Date()
@@ -63,6 +75,10 @@ export class ApiService {
           id: '4', 
           title: 'Task 4', 
           description: 'Completed task',
+          priority: 'MEDIUM',
+          status: 'Completed',
+          dueDate: null,
+          assignees: [],
           columnId: '3',
           createdAt: new Date(),
           updatedAt: new Date()

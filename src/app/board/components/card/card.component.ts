@@ -19,8 +19,12 @@ export class CardComponent {
   @Output() moveCard = new EventEmitter<Card>();
   @Output() deleteCard = new EventEmitter<Card>();
   @ViewChild('menuButton') menuButton!: ElementRef;
+  @ViewChild('assigneeList') assigneeListTrigger!: ElementRef;
 
   isMenuOpen = false;
+  isAssigneeListOpen = false;
+  showAbove = false;
+  readonly MAX_VISIBLE_ASSIGNEES = 2;
 
   constructor(private dialog: MatDialog) {}
 
@@ -30,6 +34,37 @@ export class CardComponent {
 
   closeMenu(): void {
     this.isMenuOpen = false;
+  }
+
+  toggleAssigneeList(event: MouseEvent): void {
+    if (!this.isAssigneeListOpen) {
+      const element = event.currentTarget as HTMLElement;
+      const rect = element.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const popupHeight = 280; // Header (40px) + Max content height (240px)
+      
+      this.showAbove = spaceBelow < popupHeight && spaceAbove > spaceBelow;
+    }
+    
+    this.isAssigneeListOpen = !this.isAssigneeListOpen;
+    event.stopPropagation();
+  }
+
+  closeAssigneeList(): void {
+    this.isAssigneeListOpen = false;
+  }
+
+  get visibleAssignees() {
+    return this.card.assignees.slice(0, this.MAX_VISIBLE_ASSIGNEES);
+  }
+
+  get remainingAssigneesCount() {
+    return Math.max(0, this.card.assignees.length - this.MAX_VISIBLE_ASSIGNEES);
+  }
+
+  get hasMoreAssignees() {
+    return this.card.assignees.length > this.MAX_VISIBLE_ASSIGNEES;
   }
 
   onEdit(): void {
@@ -73,7 +108,7 @@ export class CardComponent {
     const classes: { [key: string]: string } = {
       'Not Started': 'bg-gray-100 text-gray-800',
       'In Research': 'bg-blue-100 text-blue-800',
-      'On Track': 'bg-indigo-100 text-indigo-800',
+      'On Track': 'bg-indigo-50 text-indigo-600',
       'Completed': 'bg-green-100 text-green-800'
     };
     return classes[this.card.status || ''] || '';
@@ -91,10 +126,12 @@ export class CardComponent {
   }
 
   get initials(): string {
-    return this.card.assignee?.name.charAt(0).toUpperCase() || '';
+    if (!this.card) return '';
+    return this.card.assignees[0]?.name.charAt(0).toUpperCase() || '';
   }
 
   get avatarUrl(): string | null {
-    return this.card.assignee?.avatar || null;
+    if (!this.card) return null;
+    return this.card.assignees[0]?.avatar || null;
   }
 }

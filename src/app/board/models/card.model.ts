@@ -1,22 +1,19 @@
 export interface Card {
     id: string;
     title: string;
-    description?: string;
-    dueDate?: Date;
-    priority?: 'LOW' | 'MEDIUM' | 'HIGH';
-    status?: 'Not Started' | 'In Research' | 'On Track' | 'Completed';
-    assignee?: {
-      id: string;
-      name: string;
-      avatar?: string;
-    };
+    description: string;
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | null;
+    status: 'Not Started' | 'In Research' | 'On Track' | 'Completed';
+    dueDate: Date | null;
+    assignees: User[];
     columnId: string;
     createdAt: Date;
     updatedAt: Date;
-    assignees?: Array<{
-      id: string;
-      name: string;
-      email: string;
-      avatar?: string;
-    }>;
-  }
+}
+
+export interface User {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string | null;
+}

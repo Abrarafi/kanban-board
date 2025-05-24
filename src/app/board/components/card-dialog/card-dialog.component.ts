@@ -39,6 +39,8 @@ interface User {
 })
 export class CardDialogComponent {
   cardForm: FormGroup;
+  priorities = ['LOW', 'MEDIUM', 'HIGH'];
+  statuses = ['Not Started', 'In Research', 'On Track', 'Completed'];
   users: User[] = [
     { id: '1', name: 'John Doe', email: 'john@example.com', avatar: 'assets/avatars/john.jpg' },
     { id: '2', name: 'Jane Smith', email: 'jane@example.com', avatar: 'assets/avatars/jane.jpg' },
@@ -58,7 +60,8 @@ export class CardDialogComponent {
     this.cardForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
       description: [''],
-      priority: ['MEDIUM'],
+      priority: [''],
+      status: ['Not Started'],
       dueDate: [null],
       assignees: [[]]
     });
@@ -68,7 +71,8 @@ export class CardDialogComponent {
         title: data.card.title,
         description: data.card.description,
         priority: data.card.priority,
-        dueDate: data.card.dueDate ? new Date(data.card.dueDate) : null,
+        status: data.card.status,
+        dueDate: data.card.dueDate,
         assignees: data.card.assignees || []
       });
     }
@@ -85,10 +89,10 @@ export class CardDialogComponent {
         title: formValue.title,
         description: formValue.description || '',
         priority: formValue.priority,
+        status: formValue.status,
         dueDate: formValue.dueDate,
         assignees: formValue.assignees,
         columnId: this.data.columnId,
-        status: 'Not Started',
         updatedAt: new Date()
       };
 
