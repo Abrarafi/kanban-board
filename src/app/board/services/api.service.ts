@@ -106,42 +106,99 @@ export class ApiService {
     return of(newColumn);
   }
 
-  addCard(columnId: string, card: Card): Observable<Card> {
-    console.log('ApiService: addCard called with:', { columnId, card });
-    const column = this.columns.find(col => col.id === columnId);
-    if (column) {
-      // Check if a card with this ID already exists
-      const existingCardIndex = column.cards.findIndex(c => c.id === card.id);
-      if (existingCardIndex === -1) {
-        // Only add if card doesn't exist
-        column.cards.push(card);
-      }
+  updateColumn(column: Column): Observable<Column> {
+    const index = this.columns.findIndex(col => col.id === column.id);
+    if (index !== -1) {
+      this.columns[index] = {
+        ...column,
+        updatedAt: new Date()
+      };
+      return of(this.columns[index]);
     }
-    return of(card);
+    throw new Error('Column not found');
+  }
+
+  deleteColumn(columnId: string): Observable<void> {
+    const index = this.columns.findIndex(col => col.id === columnId);
+    if (index !== -1) {
+      this.columns.splice(index, 1);
+      return of(void 0);
+    }
+    throw new Error('Column not found');
+  }
+
+  addCard(columnId: string, card: Card): Observable<Card> {
+    const column = this.columns.find(col => col.id === columnId);
+    if (!column) {
+      throw new Error('Column not found');
+    }
+
+    const newCard: Card = {
+      ...card,
+      id: this.generateUniqueId(),
+      columnId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    column.cards.push(newCard);
+    return of(newCard);
   }
 
   updateCard(columnId: string, card: Card): Observable<Card> {
     const column = this.columns.find(col => col.id === columnId);
-    if (column) {
-      const index = column.cards.findIndex(c => c.id === card.id);
-      if (index !== -1) {
-        column.cards[index] = card;
-      }
+    if (!column) {
+      throw new Error('Column not found');
     }
-    return of(card);
+
+    const cardIndex = column.cards.findIndex(c => c.id === card.id);
+    if (cardIndex === -1) {
+      throw new Error('Card not found');
+    }
+
+    const updatedCard = {
+      ...card,
+      updatedAt: new Date()
+    };
+
+    column.cards[cardIndex] = updatedCard;
+    return of(updatedCard);
   }
 
   deleteCard(columnId: string, cardId: string): Observable<void> {
     const column = this.columns.find(col => col.id === columnId);
-    if (column) {
-      column.cards = column.cards.filter(card => card.id !== cardId);
+    if (!column) {
+      throw new Error('Column not found');
     }
-    return of(undefined);
+
+    const cardIndex = column.cards.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) {
+      throw new Error('Card not found');
+    }
+
+    column.cards.splice(cardIndex, 1);
+    return of(void 0);
   }
 
-  moveCard(previousColumnId: string, currentColumnId: string, card: Card): Observable<void> {
-    this.deleteCard(previousColumnId, card.id).subscribe();
-    this.addCard(currentColumnId, card).subscribe();
-    return of(undefined);
+  moveCard(sourceColumnId: string, destinationColumnId: string, card: Card): Observable<void> {
+    const sourceColumn = this.columns.find(col => col.id === sourceColumnId);
+    const destinationColumn = this.columns.find(col => col.id === destinationColumnId);
+
+    if (!sourceColumn || !destinationColumn) {
+      throw new Error('Column not found');
+    }
+
+    // Remove card from source column
+    sourceColumn.cards = sourceColumn.cards.filter(c => c.id !== card.id);
+
+    // Add card to destination column
+    const movedCard = {
+      ...card,
+      columnId: destinationColumnId,
+      updatedAt: new Date()
+    };
+    destinationColumn.cards.push(movedCard);
+
+    return of(void 0);
   }
 }

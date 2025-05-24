@@ -8,13 +8,17 @@ import { CardDialogComponent } from '../card-dialog/card-dialog.component';
 import { Card } from '../../models/card.model';
 import { ApiService } from '../../services/api.service';
 import { MoveCardDialogComponent } from '../move-card-dialog/move-card-dialog.component';
+import { EditColumnDialogComponent } from '../edit-column-dialog/edit-column-dialog.component';
+import { MatIconModule } from '@angular/material/icon';
+import { ClickOutsideDirective } from '../../directives/click-outside.directive';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-column',
   templateUrl: './column.component.html',
   styleUrls: ['./column.component.css'],
   standalone: true,
-  imports: [DragDropModule, CardComponent, NgFor]
+  imports: [DragDropModule, CardComponent, NgFor, MatIconModule, ClickOutsideDirective]
 })
 export class ColumnComponent {
   @Input() column!: Column;
@@ -22,11 +26,66 @@ export class ColumnComponent {
   @Input() allColumns: Column[] = [];
   @Output() cardDropped = new EventEmitter<CdkDragDrop<Card[]>>();
   @Output() addCard = new EventEmitter<Card>();
+  @Output() deleteColumn = new EventEmitter<string>();
+  @Output() updateColumn = new EventEmitter<Column>();
+
+  isColumnMenuOpen = false;
 
   constructor(
     private dialog: MatDialog,
     private apiService: ApiService
   ) {}
+
+  toggleColumnMenu(): void {
+    this.isColumnMenuOpen = !this.isColumnMenuOpen;
+  }
+
+  closeColumnMenu(): void {
+    this.isColumnMenuOpen = false;
+  }
+
+  onEditColumn(): void {
+    this.closeColumnMenu();
+    const dialogRef = this.dialog.open(EditColumnDialogComponent, {
+      width: '400px',
+      data: {
+        mode: 'edit',
+        column: this.column
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const updatedColumn: Column = {
+          ...this.column,
+          name: result.name,
+          color: result.color,
+          updatedAt: new Date()
+        };
+        this.updateColumn.emit(updatedColumn);
+      }
+    });
+  }
+
+  onDeleteColumn(): void {
+    this.closeColumnMenu();
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Delete Column',
+        message: 'All cards will be lost. Do you want to delete this column?',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        confirmColor: 'warn'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.deleteColumn.emit(this.column.id);
+      }
+    });
+  }
 
   onDrop(event: CdkDragDrop<Card[]>): void {
     this.cardDropped.emit(event);

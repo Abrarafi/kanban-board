@@ -22,6 +22,8 @@
             [allColumns]="board.columns"
             (cardDropped)="onCardDropped($event)"
             (addCard)="onAddCard(column.id, $event)"
+            (updateColumn)="onUpdateColumn($event)"
+            (deleteColumn)="onDeleteColumn($event)"
           ></app-column>
         }
       </div>

@@ -6,14 +6,59 @@
   (cdkDropListDropped)="onDrop($event)"
   class="flex-shrink-0 w-[416px] bg-[#E2E8F0] rounded-4xl p-4  overflow-hidden"
 >
-  <div class="flex justify-between items-center " [style.background-color]="column.color">
-
-    <h3 class=" flex flex-row font-extrabold text-[20px] text-slate-800">{{ column.name }} <h4 class="px-1 text-slate-400"> ({{column.cards.length}})</h4></h3>
-   
-    <span class="text-sm bg-white bg-opacity-30 rounded-full px-2 py-1">
-      {{ column.cards.length }}
-    </span>
+<div class="flex justify-between items-center">
+  <div class="flex flex-row items-center font-extrabold text-[20px]">
+    <!-- Colored dot -->
+    <div class="h-2 w-2 rounded-full mr-2" [style.background-color]="column.color"></div>
+    <!-- Column name with dynamic color -->
+    <h3 class="text-slate-800">
+      {{ column.name }}
+    </h3>
+    <!-- Count in parentheses -->
+    <h4 class="px-1 text-slate-400">({{column.cards.length}})</h4>
   </div>
+ 
+  <div class="flex  gap-1">
+    <button
+    (click)="onAddCard()"
+    class=" p-1  hover:bg-gray-100 rounded-full"
+  >
+  <mat-icon>add</mat-icon>
+  </button>
+    <!-- Menu Button -->
+    <div class="relative">
+      <button
+        (click)="toggleColumnMenu()"
+        class="p-1 hover:bg-gray-100 rounded-full"
+        #columnMenuButton
+      >
+        <mat-icon class="text-gray-500 text-xl">more_vert</mat-icon>
+      </button>
+
+      @if(isColumnMenuOpen) {
+        <div
+          class="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
+          (clickOutside)="closeColumnMenu()"
+        >
+          <button
+            (click)="onEditColumn()"
+            class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+          >
+            <mat-icon class="text-gray-500 text-base">edit</mat-icon>
+            Edit
+          </button>
+          <button
+            (click)="onDeleteColumn()"
+            class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2"
+          >
+            <mat-icon class="text-red-600 text-base">delete</mat-icon>
+            Delete
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>
 
   <div class="py-4 flex flex-col gap-3">
     <app-card

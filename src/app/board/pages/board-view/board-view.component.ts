@@ -43,7 +43,7 @@ export class BoardViewComponent implements OnInit {
         this.board.columns = columns;
         this.isLoading = false;
       },
-      error: (err) => {
+      error: (error: Error) => {
         this.error = 'Failed to load columns';
         this.isLoading = false;
       }
@@ -90,9 +90,36 @@ export class BoardViewComponent implements OnInit {
           }
         }
       },
-      error: (err) => {
-        console.error('BoardView: Failed to add card:', err);
+      error: (error: Error) => {
+        console.error('BoardView: Failed to add card:', error);
         this.error = 'Failed to add card';
+      }
+    });
+  }
+
+  onUpdateColumn(column: Column): void {
+    this.apiService.updateColumn(column).subscribe({
+      next: (updatedColumn: Column) => {
+        const index = this.board.columns.findIndex(col => col.id === column.id);
+        if (index !== -1) {
+          this.board.columns[index] = updatedColumn;
+        }
+      },
+      error: (error: Error) => {
+        console.error('Failed to update column:', error);
+        this.error = 'Failed to update column';
+      }
+    });
+  }
+
+  onDeleteColumn(columnId: string): void {
+    this.apiService.deleteColumn(columnId).subscribe({
+      next: () => {
+        this.board.columns = this.board.columns.filter(col => col.id !== columnId);
+      },
+      error: (error: Error) => {
+        console.error('Failed to delete column:', error);
+        this.error = 'Failed to delete column';
       }
     });
   }
@@ -114,8 +141,8 @@ export class BoardViewComponent implements OnInit {
             console.log('BoardView: Column created successfully:', column);
             this.board.columns = Array.from(new Set([...this.board.columns, column]));
           },
-          error: (err) => {
-            console.error('BoardView: Failed to create column:', err);
+          error: (error: Error) => {
+            console.error('BoardView: Failed to create column:', error);
             this.error = 'Failed to create column';
           }
         });
