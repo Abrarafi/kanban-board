@@ -127,7 +127,7 @@ export class ColumnComponent {
       width: '400px',
       data: {
         card: card,
-        columns: this.allColumns,
+        columns: this.allColumns.filter(col => col.id !== this.column.id),
         currentColumnId: this.column.id
       }
     });
@@ -135,13 +135,20 @@ export class ColumnComponent {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         const destinationColumn = result as Column;
+        
+        this.column.cards = this.column.cards.filter(c => c.id !== card.id);
+        
         this.apiService.moveCard(this.column.id, destinationColumn.id, card).subscribe({
           next: () => {
-            this.column.cards = this.column.cards.filter(c => c.id !== card.id);
-            destinationColumn.cards.push({...card, columnId: destinationColumn.id});
+            const movedCard = { ...card, columnId: destinationColumn.id };
+            const cardExists = destinationColumn.cards.some(c => c.id === card.id);
+            if (!cardExists) {
+              destinationColumn.cards.push(movedCard);
+            }
           },
           error: (err) => {
             console.error('Failed to move card:', err);
+            this.column.cards.push(card);
           }
         });
       }
