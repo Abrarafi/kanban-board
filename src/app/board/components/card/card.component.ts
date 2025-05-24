@@ -1,17 +1,64 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ElementRef, ViewChild } from '@angular/core';
 import { DatePipe, NgClass } from '@angular/common';
 import { Card } from '../../models/card.model';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
+import { CardDialogComponent } from '../card-dialog/card-dialog.component';
+import { ClickOutsideDirective } from '../../directives/click-outside.directive';
 
 @Component({
   selector: 'app-card',
   templateUrl: './card.component.html',
   styleUrls: ['./card.component.css'],
   standalone: true,
-  imports: [DatePipe, NgClass, MatIconModule]
+  imports: [DatePipe, NgClass, MatIconModule, ClickOutsideDirective]
 })
 export class CardComponent {
   @Input() card!: Card;
+  @Output() editCard = new EventEmitter<Card>();
+  @Output() moveCard = new EventEmitter<Card>();
+  @Output() deleteCard = new EventEmitter<Card>();
+  @ViewChild('menuButton') menuButton!: ElementRef;
+
+  isMenuOpen = false;
+
+  constructor(private dialog: MatDialog) {}
+
+  toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
+  }
+
+  closeMenu(): void {
+    this.isMenuOpen = false;
+  }
+
+  onEdit(): void {
+    this.closeMenu();
+    const dialogRef = this.dialog.open(CardDialogComponent, {
+      width: '500px',
+      data: {
+        mode: 'edit',
+        columnId: this.card.columnId,
+        card: this.card
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.editCard.emit(result);
+      }
+    });
+  }
+
+  onMove(): void {
+    this.closeMenu();
+    this.moveCard.emit(this.card);
+  }
+
+  onDelete(): void {
+    this.closeMenu();
+    this.deleteCard.emit(this.card);
+  }
 
   get priorityClasses(): string {
     const classes: { [key: string]: string } = {

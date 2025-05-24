@@ -1,29 +1,73 @@
-<div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all">
-  <!-- Header -->
-  <div class="flex justify-between items-start mb-3">
-    <h3 class="text-base font-medium text-gray-900">{{ card.title }}</h3>
+<div class="bg-white px-2 py-1 rounded-3xl shadow-sm border border-gray-200 hover:shadow-md transition-all">
+  <div class="px-2 py-1 flex justify-between items-start">
     <div class="flex gap-2">
+      @if(card.priority) {
+        <span class="text-xs font-semibold px-2 py-1 rounded-full" [ngClass]="priorityClasses">
+          {{ card.priority }}
+        </span>
+      }
       @if(card.status) {
-        <span class="text-xs px-2 py-1 rounded-full" [ngClass]="statusClasses">
+        <span class="text-xs px-2 font-semibold py-1 rounded-full" [ngClass]="statusClasses">
           {{ card.status }}
         </span>
       }
-      @if(card.priority) {
-        <span class="text-xs px-2 py-1 rounded-full" [ngClass]="priorityClasses">
-          {{ card.priority }}
-        </span>
+    </div>
+    
+    <div class="relative">
+      <button
+        (click)="toggleMenu()"
+        class="p-1 hover:bg-gray-100 rounded-full"
+        #menuButton
+      >
+        <mat-icon class="text-gray-500 text-xl">more_vert</mat-icon>
+      </button>
+
+      @if(isMenuOpen) {
+        <div
+          class="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
+          (clickOutside)="closeMenu()"
+        >
+          <button
+            (click)="onEdit()"
+            class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+          >
+            <mat-icon class="text-gray-500 text-base">edit</mat-icon>
+            Edit
+          </button>
+          <button
+            (click)="onMove()"
+            class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+          >
+            <mat-icon class="text-gray-500 text-base">arrow_forward</mat-icon>
+            Move
+          </button>
+          <button
+            (click)="onDelete()"
+            class="w-full px-4 py-2 text-left text-sm  hover:bg-gray-100 flex items-center gap-2 text-red-600 hover:text-red-700"
+          >
+            <mat-icon class="text-base">delete</mat-icon>
+            Delete
+          </button>
+        </div>
       }
     </div>
   </div>
 
+  <!-- Title -->
+  <div class="px-2 py-1">
+    <h3 class="text-base font-medium text-gray-900">{{ card.title }}</h3>
+  </div>
+
   <!-- Description -->
   @if(card.description) {
-    <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ card.description }}</p>
+    <div class="px-2 py-1">
+      <p class="text-sm text-gray-600 line-clamp-2">{{ card.description }}</p>
+    </div>
   }
 
   <!-- Assignee -->
   @if(card.assignee) {
-    <div class="flex items-center mb-3">
+    <div class="px-2 py-1 flex items-center">
       @if(avatarUrl) {
         <img [src]="avatarUrl" [alt]="card.assignee.name" 
              class="h-6 w-6 rounded-full mr-2 object-cover">
@@ -37,7 +81,7 @@
   }
 
   <!-- Footer -->
-  <div class="flex justify-between items-center text-xs text-gray-500">
+  <div class="px-2 py-1 flex justify-between items-center text-xs text-gray-500">
     <!-- Due Date -->
     @if(card.dueDate) {
       <div class="flex items-center">
