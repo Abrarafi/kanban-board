@@ -4,5 +4,7 @@ import { BoardViewComponent } from './board/pages/board-view/board-view.componen
 import { DashboardComponent } from './dashboard/pages/dashboard/dashboard.component';
 
 export const routes: Routes = [
-    {path: '',component:BoardViewComponent}
+    { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    { path: 'dashboard', component: DashboardComponent },
+    { path: 'board/:id', component: BoardViewComponent }
 ];

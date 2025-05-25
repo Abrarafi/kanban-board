@@ -1,15 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { DashboardService, Board, UserProfile } from '../../services/dashboard.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { CreateBoardDialogComponent } from '../../components/create-board-dialog/create-board-dialog.component';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
   standalone: true,
-  imports: [CommonModule, MatIconModule]
+  imports: [CommonModule, MatIconModule, RouterModule, MatDialogModule]
 })
 export class DashboardComponent implements OnInit {
   boards: Board[] = [];
@@ -18,7 +20,8 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private dashboardService: DashboardService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -43,15 +46,18 @@ export class DashboardComponent implements OnInit {
   }
 
   createNewBoard(): void {
-    const newBoard: Partial<Board> = {
-      name: 'New Board',
-      description: 'Add a description',
-      thumbnailColor: '#60A5FA'
-    };
+    const dialogRef = this.dialog.open(CreateBoardDialogComponent, {
+      width: '500px',
+      disableClose: true
+    });
 
-    this.dashboardService.createBoard(newBoard).subscribe(board => {
-      this.boards.push(board);
-      this.router.navigate(['/board', board.id]);
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.dashboardService.createBoard(result).subscribe(board => {
+          this.boards.push(board);
+          this.router.navigate(['/board', board.id]);
+        });
+      }
     });
   }
 
