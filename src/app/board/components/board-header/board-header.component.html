@@ -1,6 +1,13 @@
 <header class="bg-white shadow-sm">
     <div class="px-4 py-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center">
+        <div>
+        <button 
+            (click)="onInviteMembers()"
+            class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-4 font-bold rounded-3xl bg-white hover:bg-gray-50 focus:outline-none">
+            <mat-icon class="h-5 w-5 ">arrow_back</mat-icon>
+            
+          </button>
         <h1 class="text-xl font-bold text-gray-900">{{ boardTitle }}</h1>
         
         <div class="flex items-center space-x-2 gap-3">
@@ -69,6 +76,7 @@
                     Copy link
                   </div>
                 </button>
+
                 <button 
                   (click)="onShareBoard()"
                   class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">

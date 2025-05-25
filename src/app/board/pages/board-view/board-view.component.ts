@@ -8,6 +8,7 @@ import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/dr
 import { ApiService } from '../../services/api.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ColumnDialogComponent } from '../../components/column-dialog/column-dialog.component';
+import { BoardService } from '../../services/board.service';
 
 @Component({
   selector: 'app-board-view',
@@ -17,43 +18,35 @@ import { ColumnDialogComponent } from '../../components/column-dialog/column-dia
   imports: [BoardHeaderComponent, ColumnComponent]
 })
 export class BoardViewComponent implements OnInit {
-  board: Board = {
-    id: 'board1',
-    name: 'Project Board',
-    columns: [],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
-
+  board!: Board;
   isLoading = true;
   error: string | null = null;
 
   constructor(
     private apiService: ApiService,
+    private boardService: BoardService,
     private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
-    this.loadColumns();
+    this.loadBoard();
   }
 
-  private loadColumns(): void {
-    this.apiService.getColumns().subscribe({
-      next: (columns) => {
-        this.board.columns = columns;
+  private loadBoard(): void {
+    this.boardService.getBoard().subscribe({
+      next: (board) => {
+        this.board = board;
         this.isLoading = false;
       },
       error: (error: Error) => {
-        this.error = 'Failed to load columns';
+        this.error = 'Failed to load board';
         this.isLoading = false;
       }
     });
   }
 
   getConnectedColumnIds(currentColumnId: string): string[] {
-    return this.board.columns
-      .map(col => col.id)
-      .filter(id => id !== currentColumnId);
+    return this.boardService.getConnectedColumnIds(currentColumnId);
   }
 
   onCardDropped(event: CdkDragDrop<Card[]>) {
