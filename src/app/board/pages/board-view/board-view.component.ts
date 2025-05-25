@@ -64,16 +64,29 @@ export class BoardViewComponent implements OnInit {
         event.currentIndex
       );
     } else {
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
+      const sourceColumn = this.board.columns.find(col => col.id === event.previousContainer.id);
+      const targetColumn = this.board.columns.find(col => col.id === event.container.id);
+      const card = event.previousContainer.data[event.previousIndex];
 
-      const card = event.container.data[event.currentIndex];
-      const newColumnId = event.container.id;
-      this.apiService.moveCard(event.previousContainer.id, newColumnId, card).subscribe();
+      if (sourceColumn && targetColumn) {
+        // Remove from source column first
+        sourceColumn.cards = sourceColumn.cards.filter(c => c.id !== card.id);
+
+        this.apiService.moveCard(event.previousContainer.id, event.container.id, card).subscribe({
+          next: () => {
+            const movedCard = { ...card, columnId: event.container.id };
+            const cardExists = targetColumn.cards.some(c => c.id === card.id);
+            if (!cardExists) {
+              targetColumn.cards.splice(event.currentIndex, 0, movedCard);
+            }
+          },
+          error: (err) => {
+            console.error('Failed to move card:', err);
+            // Revert the change by adding the card back to source column
+            sourceColumn.cards.splice(event.previousIndex, 0, card);
+          }
+        });
+      }
     }
   }
 
