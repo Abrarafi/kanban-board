@@ -69,14 +69,16 @@ export class DashboardService {
 
   createBoard(board: Partial<Board>): Observable<Board> {
     const newBoard: Board = {
-      id: Date.now().toString(),
+      id: `board${this.mockBoards.length + 1}`,
       name: board.name || 'Untitled Board',
       description: board.description || '',
       lastModified: new Date(),
       members: 1,
       thumbnailColor: board.thumbnailColor || '#60A5FA'
     };
-    this.mockBoards.push(newBoard);
+    
+    // Add to mockBoards array
+    this.mockBoards = [...this.mockBoards, newBoard];
     return of(newBoard);
   }
 } 
