@@ -1,124 +1,121 @@
-<header class="bg-white shadow-sm">
-    <div class="px-4 py-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center">
-        <div>
+<header class="bg-white shadow-sm border-b border-gray-200">
+  <div class="px-4 sm:px-6 lg:px-8 py-4">
+    <div class="flex items-center justify-between">
+      <!-- Left section with back button and title -->
+      <div class="flex items-center space-x-4">
         <button 
-            (click)="onInviteMembers()"
-            class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-4 font-bold rounded-3xl bg-white hover:bg-gray-50 focus:outline-none">
-            <mat-icon class="h-5 w-5 ">arrow_back</mat-icon>
-            
-          </button>
-        <h1 class="text-xl font-bold text-gray-900">{{ boardTitle }}</h1>
-        
-        <div class="flex items-center space-x-2 gap-3">
-          <!-- Invite Members Button -->
-          @if(showActions){
-            <button 
-            (click)="onInviteMembers()"
-            class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-4 font-bold rounded-3xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
-            <mat-icon class="h-5 w-5 mr-1">person_add</mat-icon>
-            Invite
+          (click)="onBack()" 
+          class= " text-gray-600 hover:text-gray-900 focus:outline-none p-1 pt-2"
+          aria-label="Go back">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <h1 class="text-2xl font-semibold text-gray-900">{{ boardTitle }}</h1>
+      </div>
+
+      <!-- Right section with actions -->
+      <div class="flex items-center space-x-4" *ngIf="showActions">
+        <!-- Members List Button -->
+        <div class="relative">
+          <button
+            (click)="toggleMembersList()"
+            class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none p-1"
+            aria-label="Toggle members list">
+            <span class="flex -space-x-2">
+              <span *ngFor="let member of members.slice(0, 3)" 
+                    class="relative z-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 border-2 border-white text-sm font-medium text-gray-700">
+                {{ member.avatar }}
+              </span>
+            </span>
+            <mat-icon [class.transform]="isMembersListOpen" [class.rotate-180]="isMembersListOpen">
+              expand_more
+            </mat-icon>
           </button>
 
-          <!-- Members List Button -->
-          <div class="relative">
-            <button 
-              (click)="toggleMembersList(); $event.stopPropagation()"
-              class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-4 font-bold rounded-3xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
-              <mat-icon class="h-5 w-5 mr-1">group</mat-icon>
-              Members
-            </button>
-
-            <!-- Members List Dropdown -->
-            @if(isMembersListOpen){
-            <div (click)="$event.stopPropagation()" class="origin-top-right absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
-              <div class="py-1">
-                <div class="px-4 py-2 text-sm text-gray-900 font-medium border-b border-gray-200">
-                  Board Members
+          <!-- Members Dropdown -->
+          <div *ngIf="isMembersListOpen"
+               class="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+            <div class="py-1">
+              <div *ngFor="let member of members"
+                   class="px-4 py-2 flex items-center justify-between hover:bg-gray-100">
+                <div class="flex items-center space-x-3">
+                  <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-700">
+                    {{ member.avatar }}
+                  </span>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">{{ member.name }}</p>
+                    <p class="text-xs text-gray-500">{{ member.role }}</p>
+                  </div>
                 </div>
-                @for(member of members; track member.name){
-                  <div class="px-4 py-3 flex items-center justify-between hover:bg-gray-50">
-                    <div class="flex items-center">
-                      <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center mr-3">
-                        <span class="text-sm font-medium text-gray-700">{{member.avatar}}</span>
-                      </div>
-                      <div>
-                        <div class="text-sm font-medium text-gray-900">{{member.name}}</div>
-                        <div class="text-sm text-gray-500">{{member.role}}</div>
-                      </div>
-                    </div>
-                  </div>
-                }
               </div>
+              <button
+                (click)="onInviteMembers()"
+                class="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 flex items-center">
+                <mat-icon class="mr-2">person_add</mat-icon>
+                Invite Members
+              </button>
             </div>
-            }
           </div>
-          }
-          
-          <!-- Share Button with Dropdown -->
-          <div class="relative">
-            <button 
-              (click)="toggleShareDropdown()"
-              class="inline-flex items-center px-3 py-1.5 border text-sm leading- font-bold rounded-3xl text-white bg-indigo-600 hover:bg-primary-600 focus:outline-none font-plus-jakarta">
-              <mat-icon class="h-2 w-2 mr-1">share</mat-icon>
-              Share
-            </button>
-  
-            <!-- Share Dropdown -->
-            @if(isShareDropdownOpen){
-            <div (click)="$event.stopPropagation()" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
-              <div class="py-1">
-                <button 
-                  (click)="copyBoardLink()"
-                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                  <div class="flex items-center">
-                    <mat-icon class="mr-2">content_copy</mat-icon>
-                    Copy link
-                  </div>
-                </button>
+        </div>
 
-                <button 
-                  (click)="onShareBoard()"
-                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                  <div class="flex items-center">
-                    <mat-icon class="mr-2">mail</mat-icon>
-                    Share via email
-                  </div>
-                </button>
-              </div>
-            </div>
-             }
-          </div>
-  
-          <!-- Add Column Button -->
-          @if(showActions){
-          <button 
-            
-            (click)="onAddColumn()"
-            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-4xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
-            Add Column
+        <!-- Share Button -->
+        <div class="relative">
+          <button
+            (click)="toggleShareDropdown()"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+            aria-label="Share board">
+            <mat-icon class="mr-2">share</mat-icon>
+            Share
           </button>
-        }
-          
-          <!-- User Menu -->
-          <div class="relative ml-2">
-            <button (click)="toggleMenu()" class="flex items-center space-x-2 focus:outline-none">
-              <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                <span class="text-sm font-medium">U</span>
-              </div>
-            </button>
 
-            @if(isMenuOpen){
-            <div  class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-              <div class="py-1">
-                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
-                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
-                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
-              </div>
+          <!-- Share Dropdown -->
+          <div *ngIf="isShareDropdownOpen"
+               class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+            <div class="py-1">
+              <button
+                (click)="copyBoardLink()"
+                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                <mat-icon class="mr-2">link</mat-icon>
+                Copy Link
+              </button>
+              <button
+                (click)="onShareBoard()"
+                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                <mat-icon class="mr-2">share</mat-icon>
+                Share Settings
+              </button>
             </div>
-        }
+          </div>
+        </div>
+
+        <!-- Add Column Button -->
+        <button
+          (click)="onAddColumn()"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200 focus:outline-none"
+          aria-label="Add new column">
+          <mat-icon class="mr-2">add</mat-icon>
+          Add Column
+        </button>
+
+        <!-- Menu Button -->
+        <div class="relative">
+          <button
+            (click)="toggleMenu()"
+            class="text-gray-600 hover:text-gray-900 focus:outline-none p-1"
+            aria-label="Open menu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+
+          <!-- Menu Dropdown -->
+          <div *ngIf="isMenuOpen"
+               class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+            <div class="py-1">
+              <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Board Settings</a>
+              <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Board</a>
+              <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Delete Board</a>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </header>
+  </div>
+</header>

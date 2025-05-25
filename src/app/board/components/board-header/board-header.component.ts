@@ -1,11 +1,13 @@
 import { Component, Input, Output, EventEmitter, HostListener, ElementRef } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-board-header',
   templateUrl: './board-header.component.html',
   styleUrls: ['./board-header.component.css'],
-  imports: [MatIconModule],
+  imports: [MatIconModule, CommonModule],
   standalone: true
 })
 export class BoardHeaderComponent {
@@ -26,7 +28,14 @@ export class BoardHeaderComponent {
     { name: 'Mike Johnson', role: 'Member', avatar: 'MJ' }
   ];
 
-  constructor(private elementRef: ElementRef) {}
+  constructor(
+    private elementRef: ElementRef,
+    private router: Router
+  ) {}
+
+  onBack(): void {
+    this.router.navigate(['/dashboard']);
+  }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
