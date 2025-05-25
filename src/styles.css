@@ -1,40 +1,48 @@
-/* You can add global styles to this file, and also import other style files */
-@import "tailwindcss/preflight";
-@import "tailwindcss/utilities";
-@import "tailwindcss";
+/* 1. Import Google Font first (must come before any other rules) */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap');
+
+/* 2. Tailwind imports using modern @layer syntax */
 /* @tailwind base;
 @tailwind components;
 @tailwind utilities; */
-
-/* Import Plus Jakarta Sans from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap');
-
-/* Apply Plus Jakarta Sans as default font */
 @import "tailwindcss/preflight";
 @import "tailwindcss/utilities";
-
-:root {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+@import "tailwindcss";
+/* 3. Scoped Material theme */
+.material-theme {
+  @import "@angular/material/prebuilt-themes/indigo-pink.css";
 }
 
-body {
-  @apply bg-gray-100;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-}
-
+/* 4. Base styles using Tailwind directives */
 @layer base {
-  html {
+  :root {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
-  
+
   body {
-    @apply bg-gray-100;
+    @apply bg-gray-100 m-0 h-full;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 }
 
-/* Add Plus Jakarta Sans font family */
+/* 5. Utility class for font */
 .font-plus-jakarta {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* 6. Material component fixes */
+.mat-mdc-dialog-container {
+  @apply p-0;
+}
+.mdc-notched-outline__notch{
+  border-style: none;
+}
+.mat-mdc-icon-button{
+  line-height: normal;
+}
+
+/* 7. Ensure Material components use correct font */
+.mat-typography {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 html, body { height: 100%; }

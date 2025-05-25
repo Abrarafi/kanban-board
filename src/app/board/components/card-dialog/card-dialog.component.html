@@ -3,7 +3,7 @@
   
   <mat-dialog-content class="max-h-[70vh] overflow-y-auto">
     <form [formGroup]="cardForm" class="flex flex-col gap-4 min-w-[400px] max-w-[500px]">
-      <mat-form-field appearance="outline" class="w-full">
+      <mat-form-field appearance="outline" class="w-full pt-1">
         <mat-label>Title</mat-label>
         <input matInput formControlName="title" placeholder="Enter card title">
         <mat-error *ngIf="cardForm.get('title')?.hasError('required')">
