@@ -9,7 +9,7 @@
         <div class="relative">
           <button 
             (click)="toggleProfileMenu()" 
-            class="flex items-center space-x-3 focus:outline-none"
+            class="profile-button flex items-center space-x-3 focus:outline-none"
             aria-label="Open user menu">
             <div class="flex items-center space-x-3">
               <span class="text-sm font-medium text-gray-700">{{ userProfile?.name }}</span>
@@ -21,7 +21,7 @@
 
           <!-- Profile Dropdown -->
           <div *ngIf="isProfileMenuOpen"
-               class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+               class="profile-menu absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
             <div class="py-1">
               <div class="px-4 py-2 border-b">
                 <p class="text-sm font-medium text-gray-900">{{ userProfile?.name }}</p>

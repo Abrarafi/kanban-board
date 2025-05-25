@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Router, RouterModule } from '@angular/router';
@@ -21,7 +21,8 @@ export class DashboardComponent implements OnInit {
   constructor(
     private dashboardService: DashboardService,
     private router: Router,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private elementRef: ElementRef
   ) {}
 
   ngOnInit(): void {
@@ -48,7 +49,9 @@ export class DashboardComponent implements OnInit {
   createNewBoard(): void {
     const dialogRef = this.dialog.open(CreateBoardDialogComponent, {
       width: '500px',
-      disableClose: true
+      disableClose: false,
+      hasBackdrop: true,
+      backdropClass: 'backdrop-blur-sm',
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -62,6 +65,17 @@ export class DashboardComponent implements OnInit {
 
   toggleProfileMenu(): void {
     this.isProfileMenuOpen = !this.isProfileMenuOpen;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    // Check if click is outside the profile menu
+    const profileMenu = this.elementRef.nativeElement.querySelector('.profile-menu');
+    const profileButton = this.elementRef.nativeElement.querySelector('.profile-button');
+    
+    if (profileMenu && !profileMenu.contains(event.target) && !profileButton?.contains(event.target)) {
+      this.isProfileMenuOpen = false;
+    }
   }
 
   formatDate(date: Date): string {

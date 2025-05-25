@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -42,6 +42,14 @@ export class CreateBoardDialogComponent {
       description: [''],
       thumbnailColor: ['#60A5FA']
     });
+
+    // Configure dialog to close on backdrop click
+    this.dialogRef.backdropClick().subscribe(() => this.onCancel());
+  }
+
+  @HostListener('window:keyup.esc')
+  onEscKeyUp() {
+    this.onCancel();
   }
 
   onSubmit(): void {
