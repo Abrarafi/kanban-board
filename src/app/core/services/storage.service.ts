@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Column } from '../models/column.model';
+import { Column } from '../../board/models/column.model';
 
 @Injectable({
   providedIn: 'root'

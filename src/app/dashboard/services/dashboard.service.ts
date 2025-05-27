@@ -1,23 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
+import { User } from '../../shared/models/user.model';
+import { Board } from '../../board/models/board.model';
 
-export interface Board {
-  id: string;
-  name: string;
-  description: string;
-  lastModified: Date;
-  members: number;
-  thumbnailColor: string;
-}
+// export interface Board {
+//   id: string;
+//   name: string;
+//   description: string;
+//   lastModified: Date;
+//   members: number;
+//   thumbnailColor: string;
+// }
 
-export interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  role: string;
-  recentBoards: string[];
-}
+
 
 @Injectable({
   providedIn: 'root'
@@ -30,7 +25,9 @@ export class DashboardService {
       description: 'Main development project board',
       lastModified: new Date(),
       members: 5,
-      thumbnailColor: '#60A5FA' // blue-400
+      thumbnailColor: '#60A5FA',
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
       id: 'board2',
@@ -38,7 +35,9 @@ export class DashboardService {
       description: 'Q2 Marketing initiatives',
       lastModified: new Date(Date.now() - 86400000), // yesterday
       members: 3,
-      thumbnailColor: '#34D399' // green-400
+      thumbnailColor: '#34D399',
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
       id: 'board3',
@@ -46,24 +45,28 @@ export class DashboardService {
       description: 'Issue tracking and bug fixes',
       lastModified: new Date(Date.now() - 172800000), // 2 days ago
       members: 8,
-      thumbnailColor: '#F87171' // red-400
+      thumbnailColor: '#F87171',
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
   ];
 
-  private mockProfile: UserProfile = {
+  private mockProfile: User = {
     id: 'user1',
     name: 'John Doe',
     email: 'john.doe@example.com',
+    role: 'PROJECT_MANAGER',
     avatar: 'JD',
-    role: 'Product Manager',
-    recentBoards: ['board1', 'board2']
+    boards: ['board1', 'board2'],
+    createdAt: new Date(),
+    updatedAt: new Date()
   };
 
   getBoards(): Observable<Board[]> {
     return of(this.mockBoards);
   }
 
-  getUserProfile(): Observable<UserProfile> {
+  getUserProfile(): Observable<User> {
     return of(this.mockProfile);
   }
 
@@ -74,7 +77,9 @@ export class DashboardService {
       description: board.description || '',
       lastModified: new Date(),
       members: 1,
-      thumbnailColor: board.thumbnailColor || '#60A5FA'
+      thumbnailColor: board.thumbnailColor || '#60A5FA',
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
     
     // Add to mockBoards array

@@ -1,3 +1,5 @@
+import { User } from "../../shared/models/user.model";
+
 export interface Card {
     id: string;
     title: string;
@@ -11,9 +13,3 @@ export interface Card {
     updatedAt: Date;
 }
 
-export interface User {
-    id: string;
-    name: string;
-    email: string;
-    avatar: string | null;
-}

@@ -6,7 +6,7 @@ import { NgFor } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { CardDialogComponent } from '../card-dialog/card-dialog.component';
 import { Card } from '../../models/card.model';
-import { ApiService } from '../../services/api.service';
+import { ApiService } from '../../../core/services/api.service';
 import { MoveCardDialogComponent } from '../move-card-dialog/move-card-dialog.component';
 import { EditColumnDialogComponent } from '../edit-column-dialog/edit-column-dialog.component';
 import { MatIconModule } from '@angular/material/icon';

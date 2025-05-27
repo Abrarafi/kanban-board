@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Column } from '../models/column.model';
-import { Card } from '../models/card.model';
+import { Column } from '../../board/models/column.model';
+import { Card } from '../../board/models/card.model';
 import { CardService } from './card.service';
 import { ColumnService } from './column.service';
 

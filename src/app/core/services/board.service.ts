@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Board } from '../models/board.model';
+import { Board } from '../../board/models/board.model';
 import { StorageService } from './storage.service';
 
 @Injectable({
@@ -10,7 +10,11 @@ export class BoardService {
   private board: Board = {
     id: 'board1',
     name: 'Project Board',
+    description: 'Default project board',
+    lastModified: new Date(),
     columns: [],
+    members: 1,
+    thumbnailColor: '#60A5FA',
     createdAt: new Date(),
     updatedAt: new Date()
   };
@@ -33,7 +37,7 @@ export class BoardService {
   }
 
   getConnectedColumnIds(currentColumnId: string): string[] {
-    return this.board.columns
+    return (this.board.columns ?? [])
       .map(col => col.id)
       .filter(id => id !== currentColumnId);
   }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Column } from '../models/column.model';
+import { Column } from '../../board/models/column.model';
 import { StorageService } from './storage.service';
 
 @Injectable({

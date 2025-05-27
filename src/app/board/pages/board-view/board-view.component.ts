@@ -5,10 +5,10 @@ import { Board } from '../../models/board.model';
 import { Column } from '../../models/column.model';
 import { Card } from '../../models/card.model';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { ApiService } from '../../services/api.service';
+import { ApiService } from '../../../core/services/api.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ColumnDialogComponent } from '../../components/column-dialog/column-dialog.component';
-import { BoardService } from '../../services/board.service';
+import { BoardService } from '../../../core/services/board.service';
 
 @Component({
   selector: 'app-board-view',
@@ -18,7 +18,17 @@ import { BoardService } from '../../services/board.service';
   imports: [BoardHeaderComponent, ColumnComponent]
 })
 export class BoardViewComponent implements OnInit {
-  board!: Board;
+  board: Board = {
+    id: '',
+    name: '',
+    description: '',
+    lastModified: new Date(),
+    columns: [],
+    members: 0,
+    thumbnailColor: '',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
   isLoading = true;
   error: string | null = null;
 
@@ -57,8 +67,8 @@ export class BoardViewComponent implements OnInit {
         event.currentIndex
       );
     } else {
-      const sourceColumn = this.board.columns.find(col => col.id === event.previousContainer.id);
-      const targetColumn = this.board.columns.find(col => col.id === event.container.id);
+      const sourceColumn = (this.board.columns ?? []).find(col => col.id === event.previousContainer.id);
+      const targetColumn = (this.board.columns ?? []).find(col => col.id === event.container.id);
       const card = event.previousContainer.data[event.previousIndex];
 
       if (sourceColumn && targetColumn) {
@@ -88,7 +98,7 @@ export class BoardViewComponent implements OnInit {
     this.apiService.addCard(columnId, card).subscribe({
       next: (newCard) => {
         console.log('BoardView: Card added successfully:', newCard);
-        const column = this.board.columns.find(col => col.id === columnId);
+        const column = (this.board.columns ?? []).find(col => col.id === columnId);
         if (column) {
           const exists = column.cards.some(c => c.id === newCard.id);
           if (!exists) {
@@ -106,9 +116,11 @@ export class BoardViewComponent implements OnInit {
   onUpdateColumn(column: Column): void {
     this.apiService.updateColumn(column).subscribe({
       next: (updatedColumn: Column) => {
-        const index = this.board.columns.findIndex(col => col.id === column.id);
+        const columns = this.board.columns ?? [];
+        const index = columns.findIndex(col => col.id === column.id);
         if (index !== -1) {
-          this.board.columns[index] = updatedColumn;
+          columns[index] = updatedColumn;
+          this.board.columns = columns;
         }
       },
       error: (error: Error) => {
@@ -121,7 +133,7 @@ export class BoardViewComponent implements OnInit {
   onDeleteColumn(columnId: string): void {
     this.apiService.deleteColumn(columnId).subscribe({
       next: () => {
-        this.board.columns = this.board.columns.filter(col => col.id !== columnId);
+        this.board.columns = (this.board.columns ?? []).filter(col => col.id !== columnId);
       },
       error: (error: Error) => {
         console.error('Failed to delete column:', error);
@@ -145,7 +157,7 @@ export class BoardViewComponent implements OnInit {
         this.apiService.addColumn(this.board.id, result).subscribe({
           next: (column) => {
             console.log('BoardView: Column created successfully:', column);
-            this.board.columns = Array.from(new Set([...this.board.columns, column]));
+            this.board.columns = [...(this.board.columns ?? []), column];
           },
           error: (error: Error) => {
             console.error('BoardView: Failed to create column:', error);

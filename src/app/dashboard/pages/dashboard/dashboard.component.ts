@@ -2,7 +2,9 @@ import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Router, RouterModule } from '@angular/router';
-import { DashboardService, Board, UserProfile } from '../../services/dashboard.service';
+import { DashboardService } from '../../services/dashboard.service';
+import { Board } from '../../../board/models/board.model';
+import { User } from '../../../shared/models/user.model';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CreateBoardDialogComponent } from '../../components/create-board-dialog/create-board-dialog.component';
 
@@ -15,7 +17,7 @@ import { CreateBoardDialogComponent } from '../../components/create-board-dialog
 })
 export class DashboardComponent implements OnInit {
   boards: Board[] = [];
-  userProfile!: UserProfile;
+  userProfile!: User;
   isProfileMenuOpen = false;
 
   constructor(

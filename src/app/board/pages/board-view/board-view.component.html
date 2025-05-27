@@ -19,7 +19,7 @@
           <app-column
             [column]="column"
             [connectedTo]="getConnectedColumnIds(column.id)"
-            [allColumns]="board.columns"
+            [allColumns]="board.columns ?? []"
             (cardDropped)="onCardDropped($event)"
             (addCard)="onAddCard(column.id, $event)"
             (updateColumn)="onUpdateColumn($event)"
