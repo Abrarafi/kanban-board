@@ -59,9 +59,19 @@ export class AuthService extends ApiService {
   }
 
   logout(): void {
-    localStorage.removeItem('currentUser');
-    this.currentUserSubject.next(null);
-    this.router.navigate(['/auth/login']);
+    this.post('/signout', {}).subscribe({
+      next: () => {
+        localStorage.removeItem('currentUser');
+        this.currentUserSubject.next(null);
+        this.router.navigate(['/auth/login']);
+      },
+      error: () => {
+        // Even if the backend fails, clear local state
+        localStorage.removeItem('currentUser');
+        this.currentUserSubject.next(null);
+        this.router.navigate(['/auth/login']);
+      }
+    });
   }
 
   getCurrentUser(): User | null {

@@ -14,28 +14,151 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, takeUntil } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @Component({
   selector: 'app-column',
-  templateUrl: './column.component.html',
-  styleUrls: ['./column.component.css'],
   standalone: true,
-  imports: [NgFor, CardComponent, MatIconModule, ClickOutsideDirective, DragDropModule]
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatIconModule,
+    MatButtonModule,
+    MatInputModule,
+    MatFormFieldModule,
+    NgFor,
+    CardComponent,
+    ClickOutsideDirective,
+    DragDropModule
+  ],
+  template: `
+    <div class="column">
+      <div class="column-header">
+        <div class="column-title" *ngIf="!isEditing">
+          <h3>{{ column.name }}</h3>
+          <div class="column-actions">
+            <button mat-icon-button (click)="startEditing()">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button (click)="onDelete()">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+        <div class="column-title-edit" *ngIf="isEditing">
+          <mat-form-field appearance="outline">
+            <input matInput [(ngModel)]="editedTitle" (keyup.enter)="saveTitle()">
+          </mat-form-field>
+          <div class="edit-actions">
+            <button mat-icon-button (click)="saveTitle()">
+              <mat-icon>check</mat-icon>
+            </button>
+            <button mat-icon-button (click)="cancelEditing()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="column-content">
+        <div class="card" *ngFor="let card of column.cards" (click)="onCardClick(card)">
+          <h4>{{ card.title }}</h4>
+          <p>{{ card.description }}</p>
+        </div>
+        <button mat-button class="add-card" (click)="onAddCard()">
+          <mat-icon>add</mat-icon>
+          Add Card
+        </button>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .column {
+      background: #f4f5f7;
+      border-radius: 8px;
+      padding: 16px;
+      min-width: 280px;
+      margin: 0 8px;
+    }
+    .column-header {
+      margin-bottom: 16px;
+    }
+    .column-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .column-title h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .column-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .column-title-edit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .edit-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .column-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card {
+      background: white;
+      border-radius: 4px;
+      padding: 12px;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .card h4 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+    }
+    .card p {
+      margin: 0;
+      font-size: 12px;
+      color: #666;
+    }
+    .add-card {
+      width: 100%;
+      justify-content: flex-start;
+      color: #666;
+    }
+    .add-card mat-icon {
+      margin-right: 8px;
+    }
+  `]
 })
 export class ColumnComponent implements OnDestroy {
-  @Input() column!: Column;
+  @Input() column: any = { name: '', cards: [] };
   @Input() connectedTo: string[] = [];
   @Input() allColumns: Column[] = [];
   @Input() isProcessing = false;
   @Output() cardDropped = new EventEmitter<CdkDragDrop<Card[]>>();
-  @Output() addCard = new EventEmitter<Card>();
+  @Output() addCard = new EventEmitter<string>();
   @Output() deleteColumn = new EventEmitter<string>();
   @Output() updateColumn = new EventEmitter<Column>();
   @Output() cardUpdated = new EventEmitter<Card>();
   @Output() cardMoved = new EventEmitter<{card: Card, newColumnId: string}>();
   @Output() cardDeleted = new EventEmitter<string>();
+  @Output() delete = new EventEmitter<string>();
+  @Output() update = new EventEmitter<{id: string, title: string}>();
+  @Output() cardClick = new EventEmitter<Card>();
 
   isColumnMenuOpen = false;
+  isEditing = false;
+  editedTitle = '';
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -49,7 +172,8 @@ export class ColumnComponent implements OnDestroy {
     this.destroy$.complete();
   }
 
-  toggleColumnMenu(): void {
+  toggleColumnMenu(event: MouseEvent): void {
+    event.stopPropagation();
     this.isColumnMenuOpen = !this.isColumnMenuOpen;
   }
 
@@ -107,7 +231,71 @@ export class ColumnComponent implements OnDestroy {
   }
 
   onDrop(event: CdkDragDrop<Card[]>): void {
-    this.cardDropped.emit(event);
+    if (!this.column._id) {
+      this.showError('Invalid column ID');
+      return;
+    }
+
+    if (event.previousContainer === event.container) {
+      // Same column drop - just reorder
+      const card = event.item.data;
+      if (!card._id) {
+        this.showError('Invalid card ID');
+        return;
+      }
+      const newIndex = event.currentIndex;
+      
+      this.isProcessing = true;
+      this.cardService.moveCard(
+        card._id,
+        this.column._id,
+        this.column._id,
+        newIndex
+      ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.cardDropped.emit(event);
+          this.isProcessing = false;
+          window.location.reload();
+        },
+        error: (err) => {
+          this.showError('Failed to move card');
+          this.isProcessing = false;
+        }
+      });
+    } else {
+      // Different column drop
+      const card = event.item.data;
+      if (!card._id) {
+        this.showError('Invalid card ID');
+        return;
+      }
+      const newIndex = event.currentIndex;
+      const targetColumnId = event.container.id;
+      if (!targetColumnId) {
+        this.showError('Invalid target column');
+        return;
+      }
+      
+      this.isProcessing = true;
+      this.cardService.moveCard(
+        card._id,
+        this.column._id,
+        targetColumnId,
+        newIndex
+      ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.cardDropped.emit(event);
+          this.isProcessing = false;
+          window.location.reload();
+        },
+        error: (err) => {
+          this.showError('Failed to move card');
+          this.isProcessing = false;
+        }
+      });
+    }
   }
 
   onAddCard(): void {
@@ -128,14 +316,15 @@ export class ColumnComponent implements OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(result => {
         if (result) {
-          this.addCard.emit(result as Card);
+          this.addCard.emit(this.column._id);
+          window.location.reload();
         }
       });
   }
 
   onEditCard(card: Card): void {
-    if (!this.column._id || !card._id) {
-      this.showError('Invalid column or card ID');
+    if (!card._id) {
+      this.showError('Invalid card ID');
       return;
     }
 
@@ -143,7 +332,6 @@ export class ColumnComponent implements OnDestroy {
       width: '500px',
       data: {
         mode: 'edit',
-        columnId: this.column._id,
         card: card
       }
     });
@@ -159,6 +347,7 @@ export class ColumnComponent implements OnDestroy {
               next: (updatedCard) => {
                 this.cardUpdated.emit(updatedCard);
                 this.isProcessing = false;
+                window.location.reload();
               },
               error: (err) => {
                 this.showError('Failed to update card');
@@ -209,6 +398,7 @@ export class ColumnComponent implements OnDestroy {
                 newColumnId: destinationColumn._id || ''
               });
               this.isProcessing = false;
+              window.location.reload();
             },
             error: (err) => {
               this.showError('Failed to move card');
@@ -266,5 +456,29 @@ export class ColumnComponent implements OnDestroy {
 
   trackByCardId(index: number, card: Card): string {
     return card._id || `card_${index}`;
+  }
+
+  startEditing(): void {
+    this.editedTitle = this.column.name;
+    this.isEditing = true;
+  }
+
+  cancelEditing(): void {
+    this.isEditing = false;
+  }
+
+  saveTitle(): void {
+    if (this.editedTitle.trim()) {
+      this.update.emit({ id: this.column._id, title: this.editedTitle.trim() });
+      this.isEditing = false;
+    }
+  }
+
+  onDelete(): void {
+    this.delete.emit(this.column._id);
+  }
+
+  onCardClick(card: Card): void {
+    this.cardClick.emit(card);
   }
 }

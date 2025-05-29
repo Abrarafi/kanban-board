@@ -2,6 +2,9 @@ import { Component, Input, Output, EventEmitter, HostListener, ElementRef } from
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { InviteMemberDialogComponent } from '../invite-member-dialog/invite-member-dialog.component';
 
 @Component({
   selector: 'app-board-header',
@@ -14,9 +17,12 @@ export class BoardHeaderComponent {
   @Input() boardTitle: string | undefined = 'Kanban Board';
   @Input() showActions = true;
   @Input() isProcessing = false;
+  @Input() boardId: string = '';
   @Output() addColumn = new EventEmitter<void>();
   @Output() inviteMembers = new EventEmitter<void>();
   @Output() shareBoard = new EventEmitter<void>();
+  @Output() deleteColumn = new EventEmitter<string>();
+  @Output() updateColumn = new EventEmitter<{id: string, title: string}>();
   
   isMenuOpen = false;
   isShareDropdownOpen = false;
@@ -31,7 +37,9 @@ export class BoardHeaderComponent {
 
   constructor(
     private elementRef: ElementRef,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) {}
 
   onBack(): void {
@@ -76,8 +84,33 @@ export class BoardHeaderComponent {
     this.addColumn.emit();
   }
 
+  onDeleteColumn(columnId: string): void {
+    if (confirm('Are you sure you want to delete this column? All cards in this column will be deleted.')) {
+      this.deleteColumn.emit(columnId);
+    }
+  }
+
+  onUpdateColumn(columnId: string, newTitle: string): void {
+    this.updateColumn.emit({ id: columnId, title: newTitle });
+  }
+
   onInviteMembers(): void {
-    this.inviteMembers.emit();
+    if (!this.boardId) {
+      this.showError('Invalid board ID');
+      return;
+    }
+
+    const dialogRef = this.dialog.open(InviteMemberDialogComponent, {
+      width: '400px',
+      data: { boardId: this.boardId }
+    });
+
+    dialogRef.afterClosed().subscribe(email => {
+      if (email) {
+        this.inviteMembers.emit(email);
+        this.showSuccess('Invitation sent successfully');
+      }
+    });
   }
 
   onShareBoard(): void {
@@ -89,5 +122,19 @@ export class BoardHeaderComponent {
     const boardUrl = window.location.href;
     navigator.clipboard.writeText(boardUrl);
     alert('Board link copied to clipboard!');
+  }
+
+  private showError(message: string): void {
+    this.snackBar.open(message, 'Dismiss', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
+  }
+
+  private showSuccess(message: string): void {
+    this.snackBar.open(message, 'Dismiss', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
   }
 }

@@ -57,7 +57,6 @@ export class CardDialogComponent {
     },
     private fb: FormBuilder
   ) {
-    console.log('CardDialog data:', data);
     this.cardForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
       description: [''],
@@ -73,7 +72,7 @@ export class CardDialogComponent {
         description: data.card.description,
         priority: data.card.priority,
         status: data.card.status,
-        dueDate: data.card.dueDate,
+        dueDate: data.card.dueDate ? new Date(data.card.dueDate) : null,
         assignees: data.card.assignees || []
       });
     }
@@ -84,49 +83,40 @@ export class CardDialogComponent {
   }
 
   onSubmit(): void {
-    console.log('Form valid:', this.cardForm.valid);
-    console.log('Form errors:', this.cardForm.errors);
-    console.log('Column ID:', this.data.columnId);
-    console.log('Form value:', this.cardForm.value);
-
-    if (this.cardForm.valid && this.data.columnId) {
-      const formValue = this.cardForm.value;
-      const card: Partial<Card> = {
-        title: formValue.title,
-        description: formValue.description || '',
-        priority: formValue.priority,
-        status: formValue.status,
-        dueDate: formValue.dueDate,
-        assignees: formValue.assignees,
-        columnId: this.data.columnId,
-        updatedAt: new Date()
-      };
-
-      if (this.data.mode === 'create') {
-        card.id = Date.now().toString();
-        card.createdAt = new Date();
-      } else if (this.data.card) {
-        card.id = this.data.card.id;
-        card.createdAt = this.data.card.createdAt;
-      }
-
-      console.log('Submitting card:', card);
-      this.dialogRef.close(card);
-    } else {
-      console.error('Form is invalid or columnId is missing');
-      if (!this.cardForm.valid) {
-        console.error('Form validation errors:', this.cardForm.errors);
-        Object.keys(this.cardForm.controls).forEach(key => {
-          const control = this.cardForm.get(key);
-          if (control?.errors) {
-            console.error(`${key} errors:`, control.errors);
-          }
-        });
-      }
-      if (!this.data.columnId) {
-        console.error('Column ID is missing');
-      }
+    if (this.cardForm.invalid) {
+      Object.keys(this.cardForm.controls).forEach(key => {
+        const control = this.cardForm.get(key);
+        if (control?.invalid) {
+          control.markAsTouched();
+        }
+      });
+      return;
     }
+
+    const formValue = this.cardForm.value;
+    const card: Partial<Card> = {
+      title: formValue.title,
+      description: formValue.description || '',
+      priority: formValue.priority,
+      status: formValue.status,
+      dueDate: formValue.dueDate,
+      assignees: formValue.assignees,
+      updatedAt: new Date()
+    };
+
+    if (this.data.mode === 'create') {
+      if (!this.data.columnId) {
+        console.error('Column ID is required for creating a new card');
+        return;
+      }
+      card.columnId = this.data.columnId;
+      card.createdAt = new Date();
+    } else if (this.data.card) {
+      card._id = this.data.card._id;
+      card.createdAt = this.data.card.createdAt;
+    }
+
+    this.dialogRef.close(card);
   }
 
   onCancel(): void {

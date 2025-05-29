@@ -33,10 +33,9 @@ export class CardService extends ApiService {
   }
 
   override moveCard(cardId: string, sourceColumnId: string, targetColumnId: string, newIndex: number): Observable<void> {
-    return this.put<void>(`/cards/${cardId}/move`, {
-      sourceColumnId,
-      targetColumnId,
-      newIndex
+    return this.patch<void>(`/cards/${cardId}/move`, {
+      newColumnId: targetColumnId,
+      newPosition: newIndex
     });
   }
 

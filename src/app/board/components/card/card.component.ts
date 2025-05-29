@@ -5,133 +5,131 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { CardDialogComponent } from '../card-dialog/card-dialog.component';
 import { ClickOutsideDirective } from '../../directives/click-outside.directive';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @Component({
   selector: 'app-card',
-  templateUrl: './card.component.html',
-  styleUrls: ['./card.component.css'],
   standalone: true,
-  imports: [DatePipe, NgClass, MatIconModule, ClickOutsideDirective]
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatIconModule,
+    MatButtonModule,
+    MatInputModule,
+    MatFormFieldModule
+  ],
+  template: `
+    <div class="card" [class.editing]="isEditing">
+      <div class="card-content" *ngIf="!isEditing">
+        <div class="card-header">
+          <h4>{{ card.title }}</h4>
+          <div class="card-actions">
+            <button mat-icon-button (click)="startEditing()">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button (click)="onDelete()">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+        <p>{{ card.description }}</p>
+      </div>
+      <div class="card-edit" *ngIf="isEditing">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Title</mat-label>
+          <input matInput [(ngModel)]="editedTitle" (keyup.enter)="saveCard()">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Description</mat-label>
+          <textarea matInput [(ngModel)]="editedDescription" rows="3"></textarea>
+        </mat-form-field>
+        <div class="edit-actions">
+          <button mat-button (click)="saveCard()">Save</button>
+          <button mat-button (click)="cancelEditing()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .card {
+      background: white;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .card-header h4 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .card-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .card p {
+      margin: 0;
+      font-size: 12px;
+      color: #666;
+    }
+    .card-edit {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .edit-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .w-full {
+      width: 100%;
+    }
+  `]
 })
 export class CardComponent {
-  @Input() card!: Card;
-  @Output() editCard = new EventEmitter<Card>();
-  @Output() moveCard = new EventEmitter<Card>();
-  @Output() deleteCard = new EventEmitter<Card>();
-  @ViewChild('menuButton') menuButton!: ElementRef;
-  @ViewChild('assigneeList') assigneeListTrigger!: ElementRef;
+  @Input() card: Card = { title: '', description: '' };
+  @Output() update = new EventEmitter<Card>();
+  @Output() delete = new EventEmitter<string>();
 
-  isMenuOpen = false;
-  isAssigneeListOpen = false;
-  showAbove = false;
-  readonly MAX_VISIBLE_ASSIGNEES = 2;
+  isEditing = false;
+  editedTitle = '';
+  editedDescription = '';
 
-  constructor(private dialog: MatDialog) {}
-
-  toggleMenu(): void {
-    this.isMenuOpen = !this.isMenuOpen;
+  startEditing(): void {
+    this.editedTitle = this.card.title;
+    this.editedDescription = this.card.description;
+    this.isEditing = true;
   }
 
-  closeMenu(): void {
-    this.isMenuOpen = false;
+  cancelEditing(): void {
+    this.isEditing = false;
   }
 
-  toggleAssigneeList(event: MouseEvent): void {
-    if (!this.isAssigneeListOpen) {
-      const element = event.currentTarget as HTMLElement;
-      const rect = element.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      const popupHeight = 280; // Header (40px) + Max content height (240px)
-      
-      this.showAbove = spaceBelow < popupHeight && spaceAbove > spaceBelow;
+  saveCard(): void {
+    if (this.editedTitle.trim()) {
+      this.update.emit({
+        ...this.card,
+        title: this.editedTitle.trim(),
+        description: this.editedDescription.trim()
+      });
+      this.isEditing = false;
     }
-    
-    this.isAssigneeListOpen = !this.isAssigneeListOpen;
-    event.stopPropagation();
-  }
-
-  closeAssigneeList(): void {
-    this.isAssigneeListOpen = false;
-  }
-
-  get visibleAssignees() {
-    return this.card.assignees.slice(0, this.MAX_VISIBLE_ASSIGNEES);
-  }
-
-  get remainingAssigneesCount() {
-    return Math.max(0, this.card.assignees.length - this.MAX_VISIBLE_ASSIGNEES);
-  }
-
-  get hasMoreAssignees() {
-    return this.card.assignees.length > this.MAX_VISIBLE_ASSIGNEES;
-  }
-
-  onEdit(): void {
-    this.closeMenu();
-    const dialogRef = this.dialog.open(CardDialogComponent, {
-      width: '500px',
-      data: {
-        mode: 'edit',
-        columnId: this.card.columnId,
-        card: this.card
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.editCard.emit(result);
-      }
-    });
-  }
-
-  onMove(): void {
-    this.closeMenu();
-    this.moveCard.emit(this.card);
   }
 
   onDelete(): void {
-    this.closeMenu();
-    this.deleteCard.emit(this.card);
-  }
-
-  get priorityClasses(): string {
-    const classes: { [key: string]: string } = {
-      'LOW': 'bg-green-100 text-green-800',
-      'MEDIUM': 'bg-yellow-100 text-yellow-800',
-      'HIGH': 'bg-red-100 text-red-800'
-    };
-    return classes[this.card.priority || ''] || '';
-  }
-
-  get statusClasses(): string {
-    const classes: { [key: string]: string } = {
-      'Not Started': 'bg-gray-100 text-gray-800',
-      'In Research': 'bg-blue-100 text-blue-800',
-      'On Track': 'bg-indigo-50 text-indigo-600',
-      'Completed': 'bg-green-100 text-green-800'
-    };
-    return classes[this.card.status || ''] || '';
-  }
-
-  get isOverdue(): boolean {
-    if (!this.card.dueDate) return false;
-    return new Date(this.card.dueDate) < new Date();
-  }
-
-  get formattedDate(): string {
-    if (!this.card.dueDate) return '';
-    const date = new Date(this.card.dueDate);
-    return date.toLocaleDateString();
-  }
-
-  get initials(): string {
-    if (!this.card) return '';
-    return this.card.assignees[0]?.name.charAt(0).toUpperCase() || '';
-  }
-
-  get avatarUrl(): string | null {
-    if (!this.card) return null;
-    return this.card.assignees[0]?.avatar || null;
+    if (confirm('Are you sure you want to delete this card?')) {
+      this.delete.emit(this.card._id);
+    }
   }
 }

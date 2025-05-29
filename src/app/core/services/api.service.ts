@@ -28,15 +28,18 @@ export class ApiService {
     return this.http.delete<T>(`${this.apiUrl}${endpoint}`);
   }
 
+  protected patch<T>(endpoint: string, data: any): Observable<T> {
+    return this.http.patch<T>(`${this.apiUrl}${endpoint}`, data);
+  }
+
   updateCard(cardId: string, card: Partial<Card>): Observable<Card> {
     return this.put<Card>(`/cards/${cardId}`, card);
   }
 
   moveCard(cardId: string, sourceColumnId: string, targetColumnId: string, newIndex: number): Observable<void> {
-    return this.put<void>(`/cards/${cardId}/move`, {
-      sourceColumnId,
-      targetColumnId,
-      newIndex
+    return this.patch<void>(`/cards/${cardId}/move`, {
+      newColumnId: targetColumnId,
+      newPosition: newIndex
     });
   }
 

@@ -7,6 +7,8 @@ import { Board } from '../../../board/models/board.model';
 import { User } from '../../../shared/models/user.model';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CreateBoardDialogComponent } from '../../components/create-board-dialog/create-board-dialog.component';
+import { AuthService } from '../../../core/services/auth.service';
+import { ProfileSettingsDialogComponent } from '../../components/profile-settings-dialog/profile-settings-dialog.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,7 +26,8 @@ export class DashboardComponent implements OnInit {
     private dashboardService: DashboardService,
     private router: Router,
     private dialog: MatDialog,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -93,7 +96,21 @@ export class DashboardComponent implements OnInit {
   }
 
   logout(): void {
-    // Implement logout logic here
-    this.router.navigate(['/auth/login']);
+    this.authService.logout();
+  }
+
+  openProfileSettings(): void {
+    const dialogRef = this.dialog.open(ProfileSettingsDialogComponent, {
+      width: '500px',
+      disableClose: false,
+      hasBackdrop: true,
+      backdropClass: 'backdrop-blur-sm',
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadUserProfile();
+      }
+    });
   }
 } 

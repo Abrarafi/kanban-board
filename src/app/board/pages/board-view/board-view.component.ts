@@ -90,8 +90,8 @@ export class BoardViewComponent implements OnInit, OnDestroy {
           console.error('Failed to load board:', err);
           this.error = 'Failed to load board. Please try again.';
           this.loadingStates.board = false;
-        }
-      });
+      }
+    });
   }
 
   private loadColumns(): void {
@@ -109,8 +109,8 @@ export class BoardViewComponent implements OnInit, OnDestroy {
           console.error('Failed to load columns:', err);
           this.showError('Failed to load columns');
           this.loadingStates.columns = false;
-        }
-      });
+      }
+    });
   }
 
   // Column Operations
@@ -234,8 +234,12 @@ export class BoardViewComponent implements OnInit, OnDestroy {
 
   onCardDropped(event: CdkDragDrop<Card[]>): void {
     const card: Card = event.item.data;
-    const sourceColumnId = event.previousContainer.id;
     const targetColumnId = event.container.id;
+
+    if (!card._id || !targetColumnId) {
+      this.showError('Invalid card or column ID');
+      return;
+    }
 
     // Optimistic UI update
     if (event.previousContainer === event.container) {
@@ -250,10 +254,10 @@ export class BoardViewComponent implements OnInit, OnDestroy {
     }
 
     this.loadingStates.processing = true;
-    this.cardService.moveCard(card.id, sourceColumnId, targetColumnId, event.currentIndex)
+    this.cardService.moveCard(card._id, '', targetColumnId, event.currentIndex)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        error: (err) => {
+          error: (err) => {
           this.showError('Failed to move card');
           // Revert UI changes
           if (event.previousContainer === event.container) {
@@ -306,7 +310,8 @@ export class BoardViewComponent implements OnInit, OnDestroy {
   getConnectedColumnIds(currentColumnId: string): string[] {
     return (this.board.columns || [])
       .filter(col => col._id !== currentColumnId)
-      .map(col => col._id || '');
+      .map(col => col._id || '')
+      .filter(id => id !== ''); // Filter out empty IDs
   }
 
   trackByColumnId(index: number, column: Column): string {

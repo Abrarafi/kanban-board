@@ -1,6 +1,6 @@
 <div
   cdkDropList
-  [id]="column.id"
+  [id]="column._id || ''"
   [cdkDropListData]="column.cards"
   [cdkDropListConnectedTo]="connectedTo"
   (cdkDropListDropped)="onDrop($event)"
@@ -28,7 +28,7 @@
     <!-- Menu Button -->
     <div class="relative">
       <button
-        (click)="toggleColumnMenu()"
+        (click)="toggleColumnMenu($event)"
         class="p-1 hover:bg-gray-100 rounded-full"
         #columnMenuButton
       >
