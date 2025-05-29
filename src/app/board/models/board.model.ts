@@ -1,7 +1,8 @@
 import { Column } from "./column.model";
 
 export interface Board {
-    id: string;
+    _id: string;  // MongoDB's id field
+    id?: string;  // Optional alias for _id
     name: string;
     description: string;
     lastModified: Date;

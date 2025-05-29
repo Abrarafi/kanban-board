@@ -1,50 +1,46 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Column } from '../../board/models/column.model';
+import { environment } from '../../../environments/environment';
 import { Card } from '../../board/models/card.model';
-import { CardService } from './card.service';
-import { ColumnService } from './column.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  constructor(
-    private cardService: CardService,
-    private columnService: ColumnService
-  ) {}
+  protected apiUrl = environment.apiUrl;
 
-  // Column operations
-  getColumns(): Observable<Column[]> {
-    return this.columnService.getColumns();
+  constructor(protected http: HttpClient) {}
+
+  protected get<T>(endpoint: string): Observable<T> {
+    return this.http.get<T>(`${this.apiUrl}${endpoint}`);
   }
 
-  addColumn(boardId: string, column: Partial<Column>): Observable<Column> {
-    return this.columnService.addColumn(boardId, column);
+  protected post<T>(endpoint: string, data: any): Observable<T> {
+    return this.http.post<T>(`${this.apiUrl}${endpoint}`, data);
   }
 
-  updateColumn(column: Column): Observable<Column> {
-    return this.columnService.updateColumn(column);
+  protected put<T>(endpoint: string, data: any): Observable<T> {
+    return this.http.put<T>(`${this.apiUrl}${endpoint}`, data);
   }
 
-  deleteColumn(columnId: string): Observable<void> {
-    return this.columnService.deleteColumn(columnId);
+  protected delete<T>(endpoint: string): Observable<T> {
+    return this.http.delete<T>(`${this.apiUrl}${endpoint}`);
   }
 
-  // Card operations
-  addCard(columnId: string, card: Card): Observable<Card> {
-    return this.cardService.addCard(columnId, card);
+  updateCard(cardId: string, card: Partial<Card>): Observable<Card> {
+    return this.put<Card>(`/cards/${cardId}`, card);
   }
 
-  updateCard(columnId: string, card: Card): Observable<Card> {
-    return this.cardService.updateCard(columnId, card);
+  moveCard(cardId: string, sourceColumnId: string, targetColumnId: string, newIndex: number): Observable<void> {
+    return this.put<void>(`/cards/${cardId}/move`, {
+      sourceColumnId,
+      targetColumnId,
+      newIndex
+    });
   }
 
-  deleteCard(columnId: string, cardId: string): Observable<void> {
-    return this.cardService.deleteCard(columnId, cardId);
-  }
-
-  moveCard(sourceColumnId: string, destinationColumnId: string, card: Card): Observable<void> {
-    return this.cardService.moveCard(sourceColumnId, destinationColumnId, card);
+  deleteCard(cardId: string): Observable<void> {
+    return this.delete<void>(`/cards/${cardId}`);
   }
 }

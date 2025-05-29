@@ -11,8 +11,9 @@ import { CommonModule } from '@angular/common';
   standalone: true
 })
 export class BoardHeaderComponent {
-  @Input() boardTitle = 'Kanban Board';
+  @Input() boardTitle: string | undefined = 'Kanban Board';
   @Input() showActions = true;
+  @Input() isProcessing = false;
   @Output() addColumn = new EventEmitter<void>();
   @Output() inviteMembers = new EventEmitter<void>();
   @Output() shareBoard = new EventEmitter<void>();

@@ -57,6 +57,7 @@ export class CardDialogComponent {
     },
     private fb: FormBuilder
   ) {
+    console.log('CardDialog data:', data);
     this.cardForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
       description: [''],
@@ -83,7 +84,12 @@ export class CardDialogComponent {
   }
 
   onSubmit(): void {
-    if (this.cardForm.valid) {
+    console.log('Form valid:', this.cardForm.valid);
+    console.log('Form errors:', this.cardForm.errors);
+    console.log('Column ID:', this.data.columnId);
+    console.log('Form value:', this.cardForm.value);
+
+    if (this.cardForm.valid && this.data.columnId) {
       const formValue = this.cardForm.value;
       const card: Partial<Card> = {
         title: formValue.title,
@@ -106,6 +112,20 @@ export class CardDialogComponent {
 
       console.log('Submitting card:', card);
       this.dialogRef.close(card);
+    } else {
+      console.error('Form is invalid or columnId is missing');
+      if (!this.cardForm.valid) {
+        console.error('Form validation errors:', this.cardForm.errors);
+        Object.keys(this.cardForm.controls).forEach(key => {
+          const control = this.cardForm.get(key);
+          if (control?.errors) {
+            console.error(`${key} errors:`, control.errors);
+          }
+        });
+      }
+      if (!this.data.columnId) {
+        console.error('Column ID is missing');
+      }
     }
   }
 

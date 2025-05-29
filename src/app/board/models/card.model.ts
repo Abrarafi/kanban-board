@@ -1,7 +1,8 @@
 import { User } from "../../shared/models/user.model";
 
 export interface Card {
-    id: string;
+    _id?: string;  // MongoDB ID
+    id: string;    // Frontend ID
     title: string;
     description: string;
     priority: 'LOW' | 'MEDIUM' | 'HIGH' | null;

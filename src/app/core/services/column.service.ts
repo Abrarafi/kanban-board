@@ -1,61 +1,38 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Column } from '../../board/models/column.model';
-import { StorageService } from './storage.service';
+import { ApiService } from './api.service';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
-export class ColumnService {
-  constructor(private storageService: StorageService) {}
-
-  getColumns(): Observable<Column[]> {
-    return of(this.storageService.getColumns());
+export class ColumnService extends ApiService {
+  constructor(protected override http: HttpClient) {
+    super(http);
   }
 
-  addColumn(boardId: string, column: Partial<Column>): Observable<Column> {
-    const columns = this.storageService.getColumns();
-    
-    const newColumn: Column = {
-      id: this.storageService.generateUniqueId(),
-      name: column.name!,
-      description: column.description || '',
-      wip: column.wip || 0,
-      color: column.color || '#E2E8F0',
-      order: columns.length,
-      boardId,
-      cards: [],
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    columns.push(newColumn);
-    this.storageService.updateColumns(columns);
-    return of(newColumn);
+  getColumns(boardId: string): Observable<Column[]> {
+    return this.get<Column[]>(`/boards/${boardId}/columns`);
   }
 
-  updateColumn(column: Column): Observable<Column> {
-    const columns = this.storageService.getColumns();
-    const index = columns.findIndex(col => col.id === column.id);
-    if (index !== -1) {
-      columns[index] = {
-        ...column,
-        updatedAt: new Date()
-      };
-      this.storageService.updateColumns(columns);
-      return of(columns[index]);
-    }
-    throw new Error('Column not found');
+  getColumn(columnId: string): Observable<Column> {
+    return this.get<Column>(`/${columnId}`);
+  }
+
+  createColumn(boardId: string, column: Partial<Column>): Observable<Column> {
+    return this.post<Column>(`/boards/${boardId}/columns`, column);
+  }
+
+  updateColumn(columnId: string, column: Partial<Column>): Observable<Column> {
+    return this.put<Column>(`/columns/${columnId}`, column);
   }
 
   deleteColumn(columnId: string): Observable<void> {
-    const columns = this.storageService.getColumns();
-    const index = columns.findIndex(col => col.id === columnId);
-    if (index !== -1) {
-      columns.splice(index, 1);
-      this.storageService.updateColumns(columns);
-      return of(void 0);
-    }
-    throw new Error('Column not found');
+    return this.delete<void>(`/columns/${columnId}`);
+  }
+
+  reorderColumns(boardId: string, columnIds: string[]): Observable<Column[]> {
+    return this.put<Column[]>(`/boards/${boardId}/columns/reorder`, { columnIds });
   }
 } 

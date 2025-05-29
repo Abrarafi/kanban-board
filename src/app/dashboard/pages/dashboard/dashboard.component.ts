@@ -2,7 +2,7 @@ import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Router, RouterModule } from '@angular/router';
-import { DashboardService } from '../../services/dashboard.service';
+import { DashboardService } from '../../../core/services/dashboard.service';
 import { Board } from '../../../board/models/board.model';
 import { User } from '../../../shared/models/user.model';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -44,7 +44,11 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  openBoard(boardId: string): void {
+  openBoard(boardId: string | undefined): void {
+    if (!boardId) {
+      console.error('Board ID is undefined');
+      return;
+    }
     this.router.navigate(['/board', boardId]);
   }
 
@@ -59,7 +63,7 @@ export class DashboardComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.dashboardService.createBoard(result).subscribe(board => {
-          this.router.navigate(['/board', board.id]);
+          this.router.navigate(['/board', board._id]);
         });
       }
     });

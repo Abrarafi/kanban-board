@@ -1,170 +1,320 @@
-import { Component, OnInit } from '@angular/core';
-import { BoardHeaderComponent } from '../../components/board-header/board-header.component';
-import { ColumnComponent } from '../../components/column/column.component';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { Board } from '../../models/board.model';
 import { Column } from '../../models/column.model';
 import { Card } from '../../models/card.model';
+import { BoardService } from '../../../core/services/board.service';
+import { ColumnService } from '../../../core/services/column.service';
+import { CardService } from '../../../core/services/card.service';
+import { Subject, takeUntil } from 'rxjs';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { ApiService } from '../../../core/services/api.service';
+import { ColumnComponent } from '../../components/column/column.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ColumnDialogComponent } from '../../components/column-dialog/column-dialog.component';
-import { BoardService } from '../../../core/services/board.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { BoardHeaderComponent } from '../../components/board-header/board-header.component';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-board-view',
   templateUrl: './board-view.component.html',
   styleUrls: ['./board-view.component.css'],
   standalone: true,
-  imports: [BoardHeaderComponent, ColumnComponent]
+  imports: [
+    CommonModule,
+    ColumnComponent,
+    MatIconModule,
+    MatButtonModule,
+    BoardHeaderComponent,
+    MatProgressSpinnerModule
+  ]
 })
-export class BoardViewComponent implements OnInit {
+export class BoardViewComponent implements OnInit, OnDestroy {
   board: Board = {
+    _id: '',
     id: '',
     name: '',
     description: '',
-    lastModified: new Date(),
     columns: [],
+    lastModified: new Date(),
     members: 0,
     thumbnailColor: '',
     createdAt: new Date(),
     updatedAt: new Date()
   };
-  isLoading = true;
+  loadingStates = {
+    board: false,
+    columns: false,
+    processing: false
+  };
   error: string | null = null;
+  private destroy$ = new Subject<void>();
 
   constructor(
-    private apiService: ApiService,
+    private route: ActivatedRoute,
     private boardService: BoardService,
-    private dialog: MatDialog
+    private columnService: ColumnService,
+    private cardService: CardService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
-    this.loadBoard();
+    this.loadBoardData();
   }
 
-  private loadBoard(): void {
-    this.boardService.getBoard().subscribe({
-      next: (board) => {
-        this.board = board;
-        this.isLoading = false;
-      },
-      error: (error: Error) => {
-        this.error = 'Failed to load board';
-        this.isLoading = false;
-      }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadBoardData(): void {
+    const boardId = this.route.snapshot.paramMap.get('id');
+    if (!boardId) return;
+
+    this.loadingStates.board = true;
+    this.error = null;
+
+    this.boardService.getBoard(boardId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (board) => {
+          this.board = board;
+          this.loadColumns();
+          this.loadingStates.board = false;
+        },
+        error: (err) => {
+          console.error('Failed to load board:', err);
+          this.error = 'Failed to load board. Please try again.';
+          this.loadingStates.board = false;
+        }
+      });
+  }
+
+  private loadColumns(): void {
+    if (!this.board?.id) return;
+
+    this.loadingStates.columns = true;
+    this.columnService.getColumns(this.board.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (columns) => {
+          this.board.columns = columns;
+          this.loadingStates.columns = false;
+        },
+        error: (err) => {
+          console.error('Failed to load columns:', err);
+          this.showError('Failed to load columns');
+          this.loadingStates.columns = false;
+        }
+      });
+  }
+
+  // Column Operations
+  onAddColumn(): void {
+    const dialogRef = this.dialog.open(ColumnDialogComponent, {
+      width: '500px',
+      data: { mode: 'create', boardId: this.board.id || this.board._id }
     });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        if (result) {
+          this.loadingStates.processing = true;
+          this.columnService.createColumn(this.board.id || this.board._id, result)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (newColumn) => {
+                this.board.columns = [...(this.board.columns || []), newColumn];
+                this.loadingStates.processing = false;
+              },
+              error: (err) => {
+                this.showError('Failed to create column');
+                this.loadingStates.processing = false;
+              }
+            });
+        }
+      });
   }
 
-  getConnectedColumnIds(currentColumnId: string): string[] {
-    return this.boardService.getConnectedColumnIds(currentColumnId);
+  onUpdateColumn(updatedColumn: Column): void {
+    this.loadingStates.processing = true;
+    this.columnService.updateColumn(updatedColumn.id, updatedColumn)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (column) => {
+          this.board.columns = (this.board.columns || []).map(c => 
+            c.id === column.id ? column : c
+          );
+          this.loadingStates.processing = false;
+        },
+        error: (err) => {
+          this.showError('Failed to update column');
+          this.loadingStates.processing = false;
+        }
+      });
   }
 
-  onCardDropped(event: CdkDragDrop<Card[]>) {
+  onDeleteColumn(columnId: string): void {
+    this.loadingStates.processing = true;
+    this.columnService.deleteColumn(columnId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.board.columns = (this.board.columns || []).filter(c => c.id !== columnId);
+          this.loadingStates.processing = false;
+        },
+        error: (err) => {
+          this.showError('Failed to delete column');
+          this.loadingStates.processing = false;
+        }
+      });
+  }
+
+  // Card Operations
+  onAddCard(columnId: string, cardData: Partial<Card>): void {
+    this.loadingStates.processing = true;
+    this.cardService.createCard(columnId, cardData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (newCard) => {
+          this.board.columns = (this.board.columns || []).map(column => {
+            if (column.id === columnId) {
+              return {
+                ...column,
+                cards: [...(column.cards || []), newCard]
+              };
+            }
+            return column;
+          });
+          this.loadingStates.processing = false;
+        },
+        error: (err) => {
+          this.showError('Failed to create card');
+          this.loadingStates.processing = false;
+        }
+      });
+  }
+
+  onCardUpdated(updatedCard: Card): void {
+    this.loadingStates.processing = true;
+    this.cardService.updateCard(updatedCard.id, updatedCard)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (card) => {
+          this.updateCardInState(card);
+          this.loadingStates.processing = false;
+        },
+        error: (err) => {
+          this.showError('Failed to update card');
+          this.loadingStates.processing = false;
+        }
+      });
+  }
+
+  onCardDeleted(cardId: string): void {
+    this.loadingStates.processing = true;
+    this.cardService.deleteCard(cardId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.removeCardFromState(cardId);
+          this.loadingStates.processing = false;
+        },
+        error: (err) => {
+          this.showError('Failed to delete card');
+          this.loadingStates.processing = false;
+        }
+      });
+  }
+
+  onCardDropped(event: CdkDragDrop<Card[]>): void {
+    const card: Card = event.item.data;
+    const sourceColumnId = event.previousContainer.id;
+    const targetColumnId = event.container.id;
+
+    // Optimistic UI update
     if (event.previousContainer === event.container) {
-      moveItemInArray(
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+    } else {
+      transferArrayItem(
+        event.previousContainer.data,
         event.container.data,
         event.previousIndex,
         event.currentIndex
       );
-    } else {
-      const sourceColumn = (this.board.columns ?? []).find(col => col.id === event.previousContainer.id);
-      const targetColumn = (this.board.columns ?? []).find(col => col.id === event.container.id);
-      const card = event.previousContainer.data[event.previousIndex];
-
-      if (sourceColumn && targetColumn) {
-        // Remove from source column first
-        sourceColumn.cards = sourceColumn.cards.filter(c => c.id !== card.id);
-
-        this.apiService.moveCard(event.previousContainer.id, event.container.id, card).subscribe({
-          next: () => {
-            const movedCard = { ...card, columnId: event.container.id };
-            const cardExists = targetColumn.cards.some(c => c.id === card.id);
-            if (!cardExists) {
-              targetColumn.cards.splice(event.currentIndex, 0, movedCard);
-            }
-          },
-          error: (err) => {
-            console.error('Failed to move card:', err);
-            // Revert the change by adding the card back to source column
-            sourceColumn.cards.splice(event.previousIndex, 0, card);
-          }
-        });
-      }
     }
-  }
 
-  onAddCard(columnId: string, card: Card) {
-    console.log('BoardView: Adding card to column:', columnId, card);
-    this.apiService.addCard(columnId, card).subscribe({
-      next: (newCard) => {
-        console.log('BoardView: Card added successfully:', newCard);
-        const column = (this.board.columns ?? []).find(col => col.id === columnId);
-        if (column) {
-          const exists = column.cards.some(c => c.id === newCard.id);
-          if (!exists) {
-            column.cards = [...column.cards, newCard];
+    this.loadingStates.processing = true;
+    this.cardService.moveCard(card.id, sourceColumnId, targetColumnId, event.currentIndex)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        error: (err) => {
+          this.showError('Failed to move card');
+          // Revert UI changes
+          if (event.previousContainer === event.container) {
+            moveItemInArray(event.container.data, event.currentIndex, event.previousIndex);
+          } else {
+            transferArrayItem(
+              event.container.data,
+              event.previousContainer.data,
+              event.currentIndex,
+              event.previousIndex
+            );
           }
+          this.loadingStates.processing = false;
+        },
+        complete: () => {
+          this.loadingStates.processing = false;
         }
-      },
-      error: (error: Error) => {
-        console.error('BoardView: Failed to add card:', error);
-        this.error = 'Failed to add card';
+      });
+  }
+
+  // Helper methods
+  private updateCardInState(updatedCard: Card): void {
+    this.board.columns = (this.board.columns || []).map(column => {
+      if (!column.cards) return column;
+      
+      const cardIndex = column.cards.findIndex(c => c.id === updatedCard.id);
+      if (cardIndex !== -1) {
+        const newCards = [...column.cards];
+        newCards[cardIndex] = updatedCard;
+        return { ...column, cards: newCards };
       }
+      return column;
     });
   }
 
-  onUpdateColumn(column: Column): void {
-    this.apiService.updateColumn(column).subscribe({
-      next: (updatedColumn: Column) => {
-        const columns = this.board.columns ?? [];
-        const index = columns.findIndex(col => col.id === column.id);
-        if (index !== -1) {
-          columns[index] = updatedColumn;
-          this.board.columns = columns;
-        }
-      },
-      error: (error: Error) => {
-        console.error('Failed to update column:', error);
-        this.error = 'Failed to update column';
-      }
+  private removeCardFromState(cardId: string): void {
+    this.board.columns = (this.board.columns || []).map(column => ({
+      ...column,
+      cards: column.cards?.filter(c => c.id !== cardId) || []
+    }));
+  }
+
+  private showError(message: string): void {
+    this.snackBar.open(message, 'Dismiss', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
     });
   }
 
-  onDeleteColumn(columnId: string): void {
-    this.apiService.deleteColumn(columnId).subscribe({
-      next: () => {
-        this.board.columns = (this.board.columns ?? []).filter(col => col.id !== columnId);
-      },
-      error: (error: Error) => {
-        console.error('Failed to delete column:', error);
-        this.error = 'Failed to delete column';
-      }
-    });
+  getConnectedColumnIds(currentColumnId: string): string[] {
+    return (this.board.columns || [])
+      .filter(col => col._id !== currentColumnId)
+      .map(col => col._id || '');
   }
 
-  addNewColumn(): void {
-    const dialogRef = this.dialog.open(ColumnDialogComponent, {
-      width: '500px',
-      data: {
-        mode: 'create',
-        boardId: this.board.id
-      }
-    });
+  trackByColumnId(index: number, column: Column): string {
+    return column._id || `column_${index}`;
+  }
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        console.log('BoardView: Creating new column:', result);
-        this.apiService.addColumn(this.board.id, result).subscribe({
-          next: (column) => {
-            console.log('BoardView: Column created successfully:', column);
-            this.board.columns = [...(this.board.columns ?? []), column];
-          },
-          error: (error: Error) => {
-            console.error('BoardView: Failed to create column:', error);
-            this.error = 'Failed to create column';
-          }
-        });
-      }
-    });
+  retryLoading(): void {
+    this.error = null;
+    this.loadBoardData();
   }
 }

@@ -1,33 +1,72 @@
 <div class="h-full flex flex-col">
   <app-board-header 
-    [boardTitle]="board.name"
-    (addColumn)="addNewColumn()">
+    [boardTitle]="board?.name"
+    [isProcessing]="loadingStates.processing"
+    (addColumn)="onAddColumn()">
   </app-board-header>
   
-  @if (isLoading) {
-    <div class="flex-1 flex items-center justify-center">
-      <p class="text-gray-500">Loading board...</p>
+  <!-- Loading State -->
+  @if (loadingStates.board || loadingStates.columns) {
+    <div class="flex-1 grid place-items-center">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p class="mt-4 text-gray-600">Loading board data...</p>
     </div>
-  } @else if (error) {
-    <div class="flex-1 flex items-center justify-center">
-      <p class="text-red-500">{{ error }}</p>
-    </div>
-  } @else {
-    <div class="flex-1 p-6 overflow-x-auto">
-      <div class="flex gap-6">
-        @for(column of board.columns; track column.id) {
-          <app-column
-            [column]="column"
-            [connectedTo]="getConnectedColumnIds(column.id)"
-            [allColumns]="board.columns ?? []"
-            (cardDropped)="onCardDropped($event)"
-            (addCard)="onAddCard(column.id, $event)"
-            (updateColumn)="onUpdateColumn($event)"
-            (deleteColumn)="onDeleteColumn($event)"
-          ></app-column>
-        }
+  }
+  
+  <!-- Error State -->
+  @else if (error) {
+    <div class="flex-1 grid place-items-center p-4">
+      <div class="text-center max-w-md">
+        <mat-icon color="warn" class="scale-150 mb-2">error_outline</mat-icon>
+        <p class="text-red-500 mb-4">{{ error }}</p>
+        <button 
+          mat-raised-button 
+          color="primary"
+          (click)="retryLoading()"
+          [disabled]="loadingStates.board">
+          Retry
+        </button>
       </div>
     </div>
   }
+  
+  <!-- Content -->
+  @else {
+    <div class="flex-1 p-4 overflow-x-auto">
+      <div cdkDropListGroup class="flex gap-4 min-h-[70vh]">
+        @for (column of board.columns; track trackByColumnId($index, column)) {
+          <app-column
+            [column]="column"
+            [connectedTo]="getConnectedColumnIds(column._id || '')"
+            [allColumns]="board.columns || []"
+            [isProcessing]="loadingStates.processing"
+            (cardDropped)="onCardDropped($event)"
+            (addCard)="onAddCard(column._id || '', $event)"
+            (updateColumn)="onUpdateColumn($event)"
+            (deleteColumn)="onDeleteColumn($event)"
+            (cardUpdated)="onCardUpdated($event)"
+            (cardDeleted)="onCardDeleted($event)">
+          </app-column>
+        }
+      </div>
+      
+      <!-- Empty State -->
+      @if (board?.columns?.length === 0) {
+        <div class="grid place-items-center h-full">
+          <div class="text-center max-w-md">
+            <mat-icon class="scale-150 mb-4 text-gray-400">table_chart</mat-icon>
+            <h3 class="text-lg font-medium text-gray-700">No columns yet</h3>
+            <p class="text-gray-500 mb-4">Add your first column to get started</p>
+            <button 
+              mat-raised-button 
+              color="primary"
+              (click)="onAddColumn()"
+              [disabled]="loadingStates.processing">
+              Add Column
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
 </div>
-

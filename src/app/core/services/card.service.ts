@@ -1,94 +1,46 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Card } from '../../board/models/card.model';
-import { StorageService } from './storage.service';
+import { ApiService } from './api.service';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
-export class CardService {
-  constructor(private storageService: StorageService) {}
-
-  addCard(columnId: string, card: Card): Observable<Card> {
-    const columns = this.storageService.getColumns();
-    const column = columns.find(col => col.id === columnId);
-    if (!column) {
-      throw new Error('Column not found');
-    }
-
-    const newCard: Card = {
-      ...card,
-      id: this.storageService.generateUniqueId(),
-      columnId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    column.cards.push(newCard);
-    this.storageService.updateColumns(columns);
-    return of(newCard);
+export class CardService extends ApiService {
+  constructor(protected override http: HttpClient) {
+    super(http);
   }
 
-  updateCard(columnId: string, card: Card): Observable<Card> {
-    const columns = this.storageService.getColumns();
-    const column = columns.find(col => col.id === columnId);
-    if (!column) {
-      throw new Error('Column not found');
-    }
-
-    const cardIndex = column.cards.findIndex(c => c.id === card.id);
-    if (cardIndex === -1) {
-      throw new Error('Card not found');
-    }
-
-    const updatedCard = {
-      ...card,
-      updatedAt: new Date()
-    };
-
-    column.cards[cardIndex] = updatedCard;
-    this.storageService.updateColumns(columns);
-    return of(updatedCard);
+  getCards(columnId: string): Observable<Card[]> {
+    return this.get<Card[]>(`/cards/columns/${columnId}/cards`);
   }
 
-  deleteCard(columnId: string, cardId: string): Observable<void> {
-    const columns = this.storageService.getColumns();
-    const column = columns.find(col => col.id === columnId);
-    if (!column) {
-      throw new Error('Column not found');
-    }
-
-    const cardIndex = column.cards.findIndex(c => c.id === cardId);
-    if (cardIndex === -1) {
-      throw new Error('Card not found');
-    }
-
-    column.cards.splice(cardIndex, 1);
-    this.storageService.updateColumns(columns);
-    return of(void 0);
+  getCard(cardId: string): Observable<Card> {
+    return this.get<Card>(`/cards/${cardId}`);
   }
 
-  moveCard(sourceColumnId: string, destinationColumnId: string, card: Card): Observable<void> {
-    const columns = this.storageService.getColumns();
-    const sourceColumn = columns.find(col => col.id === sourceColumnId);
-    const destinationColumn = columns.find(col => col.id === destinationColumnId);
+  createCard(columnId: string, card: Partial<Card>): Observable<Card> {
+    return this.post<Card>(`/cards/${columnId}`, card);
+  }
 
-    if (!sourceColumn || !destinationColumn) {
-      throw new Error('Column not found');
-    }
+  override updateCard(cardId: string, card: Partial<Card>): Observable<Card> {
+    return this.put<Card>(`/cards/${cardId}`, card);
+  }
 
-    // Remove card from source column
-    sourceColumn.cards = sourceColumn.cards.filter(c => c.id !== card.id);
+  override deleteCard(cardId: string): Observable<void> {
+    return this.delete<void>(`/cards/${cardId}`);
+  }
 
-    // Add card to destination column
-    const movedCard = {
-      ...card,
-      columnId: destinationColumnId,
-      updatedAt: new Date()
-    };
-    destinationColumn.cards.push(movedCard);
+  override moveCard(cardId: string, sourceColumnId: string, targetColumnId: string, newIndex: number): Observable<void> {
+    return this.put<void>(`/cards/${cardId}/move`, {
+      sourceColumnId,
+      targetColumnId,
+      newIndex
+    });
+  }
 
-    this.storageService.updateColumns(columns);
-    return of(void 0);
+  getBoardCards(boardId: string): Observable<Card[]> {
+    return this.get<Card[]>(`/cards/boards/${boardId}/cards`);
   }
 } 

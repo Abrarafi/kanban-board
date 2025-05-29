@@ -58,7 +58,7 @@
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       <!-- Board Cards -->
       <div *ngFor="let board of boards"
-           (click)="openBoard(board.id)"
+           (click)="board._id && openBoard(board._id)"
            class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
         <!-- Board Preview -->
         <div [style.background-color]="board.thumbnailColor"
