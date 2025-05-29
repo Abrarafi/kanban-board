@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { User } from '../../shared/models/user.model';
@@ -40,18 +40,28 @@ export class AuthService extends ApiService {
   }
 
   login(email: string, password: string): Observable<User> {
-    return this.post<User>('/login', { email, password }).pipe(
-      tap(user => {
+    return this.post<AuthResponse>('/login', { email, password }).pipe(
+      tap(response => {
+        const user: User = {
+          ...response.user,
+          role: 'TEAM_MEMBER', // Default role, will be updated by getProfile
+          token: response.token
+        };
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.currentUserSubject.next(user);
-      })
+      }),
+      map(response => ({
+        ...response.user,
+        role: 'TEAM_MEMBER', // Default role, will be updated by getProfile
+        token: response.token
+      }))
     );
   }
 
   logout(): void {
     localStorage.removeItem('currentUser');
     this.currentUserSubject.next(null);
-    this.router.navigate(['/login']);
+    this.router.navigate(['/auth/login']);
   }
 
   getCurrentUser(): User | null {
@@ -59,18 +69,34 @@ export class AuthService extends ApiService {
   }
 
   isAuthenticated(): boolean {
-    return !!this.currentUserSubject.value;
+    const user = this.getCurrentUser();
+    return !!user && !!user.token;
   }
 
   getProfile(): Observable<User> {
-    return this.get<User>('/auth/profile');
+    return this.get<User>('/profile').pipe(
+      tap(user => {
+        const currentUser = this.getCurrentUser();
+        const updatedUser = {
+          ...user,
+          token: currentUser?.token
+        };
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        this.currentUserSubject.next(updatedUser);
+      })
+    );
   }
 
   updateProfile(userData: Partial<User>): Observable<User> {
     return this.put<User>('/profile', userData).pipe(
       tap(user => {
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        this.currentUserSubject.next(user);
+        const currentUser = this.getCurrentUser();
+        const updatedUser = {
+          ...user,
+          token: currentUser?.token
+        };
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        this.currentUserSubject.next(updatedUser);
       })
     );
   }
@@ -80,7 +106,8 @@ export class AuthService extends ApiService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem('token');
+    const user = this.getCurrentUser();
+    return user?.token || null;
   }
 
   isTokenValid(): boolean {

@@ -7,6 +7,7 @@ export interface User {
     boards?: string[];        // Array of board IDs the user belongs to
     createdAt?: Date;         // From backend
     updatedAt?: Date;         // From backend
+    token?: string;          // JWT token for authenticated users
   }
   
   // Example of a minimal user object for auth
